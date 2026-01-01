@@ -27,12 +27,13 @@ DeltaGov is an open-source "Git for Government" platform designed to track, vers
 /deltagov
 ├── /backend                 # Go module
 │   ├── /cmd
-│   │   ├── /api             # REST API (Fiber/Gin)
+│   │   ├── /api             # REST API (Fiber)
 │   │   └── /ingestor        # Background worker (Congress.gov API poller)
 │   ├── /internal            # Shared logic
-│   │   ├── /models          # GORM structs (Bills, Versions)
-│   │   ├── /api_client      # Congress.gov V3 API Wrapper
-│   │   └── /diff_engine     # Myers diff implementation
+│   │   ├── /api             # API route handlers
+│   │   ├── /congress        # Congress.gov V3 API client
+│   │   ├── /diff_engine     # Myers diff (go-udiff)
+│   │   └── /models          # GORM structs (Bills, Versions, Deltas)
 ├── /frontend                # Angular workspace
 │   └── /src/app             # Diff-viewer components & state services
 ├── /deployments             # Dockerfile & docker-compose.yml
