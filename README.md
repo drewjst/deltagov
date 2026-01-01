@@ -28,7 +28,7 @@ Legislative bills often go through dozens of revisions before becoming law. Unde
 
 | Component      | Technology              |
 |----------------|-------------------------|
-| Frontend       | Angular 19+             |
+| Frontend       | Angular 21              |
 | Backend        | Go (Golang)             |
 | Database       | PostgreSQL with JSONB   |
 | Infrastructure | GCP (Cloud Run)         |
@@ -48,7 +48,8 @@ Legislative bills often go through dozens of revisions before becoming law. Unde
 ### Prerequisites
 
 - Go 1.21+
-- Node.js 20+
+- Node.js 20.11+
+- Angular CLI 21+
 - PostgreSQL 15+
 - Docker (optional)
 

@@ -16,7 +16,7 @@ DeltaGov is an open-source "Git for Government" platform designed to track, vers
 
 | Layer          | Technology                  | Rationale                                              |
 |----------------|-----------------------------|---------------------------------------------------------|
-| Frontend       | Angular (v19+)              | Enterprise-grade state management, strict typing        |
+| Frontend       | Angular (v21)               | Enterprise-grade state management, strict typing        |
 | Backend        | Go (Golang)                 | High-concurrency ingestion, fast string manipulation    |
 | Database       | PostgreSQL (with JSONB)     | Hybrid relational/document storage for bill metadata    |
 | Infrastructure | GCP (Cloud Run, Cloud SQL)  | Modular Monolith architecture                          |
