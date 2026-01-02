@@ -17,7 +17,7 @@ Starting with U.S. spending bills, DeltaGov makes it easy to see exactly what ch
 
 ## Why DeltaGov?
 
-Legislative bills often go through dozens of revisions before becoming law. Understanding what changed between versions is critical for:
+Laws are the source code of society. Yet, while we track every semicolon in a mobile app, the trillions of dollars moving through spending bills are often hidden in 2,000-page PDFs. DeltaGov provides the Version Control System (VCS) that democracy is missing.
 
 - **Journalists** investigating policy shifts
 - **Researchers** studying legislative processes
@@ -32,28 +32,34 @@ Legislative bills often go through dozens of revisions before becoming law. Unde
 | UI Components  | Spartan NG, Tailwind CSS |
 | Backend        | Go (Golang)             |
 | Database       | PostgreSQL with JSONB   |
-| Infrastructure | GCP (Cloud Run)         |
+| Infrastructure | GCP Cloud Run       |
 
 ## Project Structure
 
 ```
 /deltagov
-├── /backend                   # Go API and ingestion workers
+├── /backend                        # Go API and ingestion workers
 │   ├── cmd/
-│   │   ├── api/              # Web API entry point
-│   │   └── ingestor/         # Background worker entry point
+│   │   ├── api/                    # Web API entry point
+│   │   └── ingestor/               # Background worker entry point
 │   └── internal/
-│       ├── api_client/       # Congress.gov API wrapper
-│       ├── database/         # PostgreSQL/GORM layer
-│       ├── models/           # Shared Go structs
-│       └── processor/        # Diff engine logic
-├── /frontend                  # Angular web application
+│       ├── api_client/             # Congress.gov API wrapper
+│       ├── database/               # PostgreSQL/GORM layer
+│       ├── models/                 # Shared Go structs
+│       └── processor/              # Diff engine logic
+├── /frontend                       # Angular web application
 │   └── src/app/
-│       ├── components/       # UI components (diff viewer, bill list, etc.)
-│       ├── services/         # API communication & business logic
-│       └── models/           # TypeScript interfaces
-├── /deployments              # Docker and deployment configs
-└── LICENSE                    # GNU AGPLv3
+│       ├── components/             # UI components (diff viewer, bill list, etc.)
+│       ├── services/               # API communication & business logic
+│       └── models/                 # TypeScript interfaces
+├── /deployments
+│   ├── /docker
+│   │   ├── api.Dockerfile          # Multi-stage Distroless build
+│   │   ├── ingestor.Dockerfile     # Same binary, different entrypoint
+│   │   └── frontend.Dockerfile     # Nginx-based static host
+│   ├── docker-compose.yml          # For local dev orchestration
+│   └── cloud-run.sh                # Helper script for gcloud CLI deploys
+└── LICENSE                         # GNU AGPLv3
 ```
 
 ## Getting Started
@@ -118,6 +124,24 @@ We welcome contributions! Please see our contributing guidelines (coming soon).
 ### Development
 
 For detailed development instructions and coding conventions, see [CLAUDE.md](./CLAUDE.md).
+
+graph TD
+    subgraph "External Data"
+        C[Congress.gov API V3]
+    end
+
+    subgraph "DeltaGov Backend (Go)"
+        I[Ingestor Worker] -->|Poll & Hash| H{Content Change?}
+        H -->|Yes| DB[(PostgreSQL)]
+        H -->|No| S[Sleep/Wait]
+        D[Diff Engine] <-->|Myers Algorithm| DB
+        A[REST API] <--> DB
+    end
+
+    subgraph "Frontend (Angular 21)"
+        F[SignalStore] <--> A
+        F --> V[Spartan UI / Diff Viewer]
+    end
 
 ## License
 
