@@ -24,16 +24,32 @@
         <lucide-icon [img]="GitCompareIcon" class="h-4 w-4 text-muted-foreground" />
         <span class="text-sm text-muted-foreground">Comparing:</span>
       </div>
-      <select class="px-3 py-1.5 rounded-md bg-background border border-input text-sm">
-        <option>Version 3 (Dec 15)</option>
-        <option>Version 2 (Dec 10)</option>
-        <option>Version 1 (Dec 1)</option>
-      </select>
+
+      <!-- From Version Select -->
+      <brn-select [(ngModel)]="fromVersion" placeholder="Select version">
+        <hlm-select-trigger class="w-44">
+          <hlm-select-value />
+        </hlm-select-trigger>
+        <hlm-select-content>
+          @for (version of versions; track version.value) {
+            <hlm-option [value]="version.value">{{ version.label }}</hlm-option>
+          }
+        </hlm-select-content>
+      </brn-select>
+
       <span class="text-muted-foreground">→</span>
-      <select class="px-3 py-1.5 rounded-md bg-background border border-input text-sm">
-        <option>Version 4 (Dec 20)</option>
-        <option>Version 3 (Dec 15)</option>
-      </select>
+
+      <!-- To Version Select -->
+      <brn-select [(ngModel)]="toVersion" placeholder="Select version">
+        <hlm-select-trigger class="w-44">
+          <hlm-select-value />
+        </hlm-select-trigger>
+        <hlm-select-content>
+          @for (version of versions; track version.value) {
+            <hlm-option [value]="version.value">{{ version.label }}</hlm-option>
+          }
+        </hlm-select-content>
+      </brn-select>
     </div>
   </div>
 
