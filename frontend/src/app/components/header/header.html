@@ -5,29 +5,53 @@
       <span class="text-primary">Delta</span><span class="text-muted-foreground">Gov</span>
     </div>
 
-    <!-- AI Search Bar -->
+    <!-- AI Search Bar using Spartan Command -->
     <div class="flex-1 max-w-2xl mx-auto">
-      <div class="relative">
-        <div class="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 text-muted-foreground">
-          <lucide-icon [img]="SparklesIcon" class="h-4 w-4 text-primary" />
-          <lucide-icon [img]="SearchIcon" class="h-4 w-4" />
-        </div>
-        <input
-          type="text"
-          placeholder="Ask AI about any bill, amendment, or policy change..."
-          class="w-full h-10 pl-14 pr-4 rounded-lg bg-secondary border border-input text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-        />
-      </div>
+      <hlm-command class="rounded-lg border shadow-sm">
+        <hlm-command-search>
+          <ng-icon hlm name="lucideSparkles" class="shrink-0 text-primary" size="sm" />
+          <ng-icon hlm name="lucideSearch" class="shrink-0 opacity-50" size="sm" />
+          <input
+            type="text"
+            hlm-command-search-input
+            placeholder="Ask AI about any bill, amendment, or policy change..."
+          />
+        </hlm-command-search>
+
+        <hlm-command-list>
+          <hlm-command-group>
+            <hlm-command-group-label>Suggestions</hlm-command-group-label>
+            <button hlm-command-item value="recent-bills">
+              <ng-icon hlm name="lucideFileText" hlmCommandIcon />
+              Search recent bills
+            </button>
+            <button hlm-command-item value="compare-versions">
+              <ng-icon hlm name="lucideGitCompare" hlmCommandIcon />
+              Compare bill versions
+            </button>
+            <button hlm-command-item value="spending-changes">
+              <ng-icon hlm name="lucideTrendingUp" hlmCommandIcon />
+              Find spending changes
+            </button>
+            <button hlm-command-item value="bill-history">
+              <ng-icon hlm name="lucideHistory" hlmCommandIcon />
+              View bill history
+            </button>
+          </hlm-command-group>
+        </hlm-command-list>
+
+        <div *brnCommandEmpty hlmCommandEmpty>No results found.</div>
+      </hlm-command>
     </div>
 
     <!-- User Profile -->
     <div class="flex items-center gap-3">
       <button class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent transition-colors">
         <div class="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
-          <lucide-icon [img]="UserIcon" class="h-4 w-4 text-primary-foreground" />
+          <ng-icon hlm name="lucideUser" class="text-primary-foreground" size="sm" />
         </div>
         <span class="text-sm font-medium hidden sm:inline">User</span>
-        <lucide-icon [img]="ChevronDownIcon" class="h-4 w-4 text-muted-foreground hidden sm:inline" />
+        <ng-icon hlm name="lucideChevronDown" class="text-muted-foreground hidden sm:inline" size="sm" />
       </button>
     </div>
   </div>
