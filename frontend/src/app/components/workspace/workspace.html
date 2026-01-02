@@ -1,11 +1,11 @@
-<div class="flex h-[calc(100vh-4rem)] overflow-hidden">
-  <!-- Left Pane: The Living Bill (Diff Viewer) -->
-  <div class="flex-1 border-r border-border overflow-auto">
+<div class="flex flex-col md:flex-row h-[calc(100vh-4rem)] overflow-hidden">
+  <!-- Main Pane: The Living Bill (Diff Viewer) -->
+  <div class="flex-1 md:border-r border-b md:border-b-0 border-border overflow-auto min-h-[50vh] md:min-h-0">
     <app-living-bill />
   </div>
 
-  <!-- Right Pane: The Insight Engine -->
-  <div class="w-[400px] flex-shrink-0 overflow-auto">
+  <!-- Side/Bottom Pane: The Insight Engine -->
+  <div class="h-[40vh] md:h-auto md:w-[400px] flex-shrink-0 overflow-auto">
     <app-insight-engine />
   </div>
 </div>
