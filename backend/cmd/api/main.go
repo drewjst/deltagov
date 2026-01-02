@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/danielgtaylor/huma/v2/adapters/humafiber"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -34,19 +37,40 @@ func main() {
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 
-	// Health check
-	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"status":  "healthy",
-			"service": "deltagov-api",
-		})
-	})
+	// Create Huma API with OpenAPI config
+	humaConfig := huma.DefaultConfig("DeltaGov API", "1.0.0")
+	humaConfig.Info.Description = "API for tracking and comparing legislative bill versions"
+	humaConfig.Servers = []*huma.Server{
+		{URL: fmt.Sprintf("http://localhost:%s", port), Description: "Local development"},
+	}
+
+	humaAPI := humafiber.New(app, humaConfig)
 
 	// Register API routes
-	api.RegisterRoutes(app)
+	api.RegisterRoutes(humaAPI)
+
+	// Serve Scalar API documentation at /docs
+	app.Get("/docs", func(c *fiber.Ctx) error {
+		html := `<!DOCTYPE html>
+<html>
+<head>
+    <title>DeltaGov API Docs</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+    <script id="api-reference" data-url="/openapi.json"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+</body>
+</html>`
+		c.Set("Content-Type", "text/html")
+		return c.SendString(html)
+	})
 
 	// Start server
 	log.Printf("DeltaGov API starting on port %s", port)
+	log.Printf("API docs available at http://localhost:%s/docs", port)
+	log.Printf("OpenAPI spec at http://localhost:%s/openapi.json", port)
 	if err := app.Listen(":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}

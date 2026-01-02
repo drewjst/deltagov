@@ -140,6 +140,8 @@ docker-compose down
 - **Reuse**: Use `sync.Pool` for heavy objects like buffers in the `diff_engine`.
 - **Concurrency**: Use `errgroup` for ingestion; always propagate `context.Context`.
 - **Strings**: Use `strings.Builder` for bill content assembly.
+- **Local Testing UI**: The API must serve an interactive **Scalar** or **Stoplight** UI at `/docs`.
+- **Spec**: Always use **OpenAPI 3.1**.
 
 ### Angular Frontend (Spartan/Tailwind)
 - **Library**: Standardize on **Spartan NG** (`@spartan-ng/ui-primitive`).
