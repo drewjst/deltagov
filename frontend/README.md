@@ -2,6 +2,42 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.4.
 
+## State Management
+
+This project uses **NGRX SignalStore** (`@ngrx/signals`) for reactive state management. SignalStore provides:
+
+- Signal-based reactivity integrated with Angular's change detection
+- Type-safe state with `withState()`
+- Derived state via `withComputed()`
+- Actions/methods via `withMethods()`
+
+### Store Pattern
+
+Feature stores are co-located with their components:
+
+```
+src/app/components/living-bill/
+├── living-bill.ts
+├── living-bill.html
+├── living-bill.scss
+└── living-bill.store.ts    # SignalStore for this feature
+```
+
+### Usage
+
+```typescript
+// Inject the store
+readonly store = inject(LivingBillStore);
+
+// Read state (signals)
+store.versions()
+store.isLoading()
+
+// Call methods
+store.selectFromVersion('v1');
+store.setError('Something went wrong');
+```
+
 ## Development server
 
 To start a local development server, run:

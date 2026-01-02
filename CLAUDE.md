@@ -135,18 +135,17 @@ docker-compose down
 
 ## Coding Conventions
 
-### Go Backend
-- Follow standard Go project layout
-- Use GORM for database ORM
-- Place shared business logic in `/internal`
-- Use context.Context for request-scoped values
-- Prefer interfaces for testability
+### Go Backend (Performance-First)
+- **Allocations**: Pre-allocate slices/maps (`make([], 0, n)`) to avoid re-allocs.
+- **Reuse**: Use `sync.Pool` for heavy objects like buffers in the `diff_engine`.
+- **Concurrency**: Use `errgroup` for ingestion; always propagate `context.Context`.
+- **Strings**: Use `strings.Builder` for bill content assembly.
 
-### Angular Frontend
-- Use standalone components (Angular 19+)
-- Leverage Angular signals for state management
-- Follow Angular style guide for file naming (`*.component.ts`, `*.service.ts`)
-- Use strict TypeScript settings
+### Angular Frontend (Spartan/Tailwind)
+- **Library**: Standardize on **Spartan NG** (`@spartan-ng/ui-primitive`).
+- **State**: Use **NGRX SignalStore** (`@ngrx/signals`) for feature state management; co-locate stores with components.
+- **Styling**: Tailwind CSS exclusively; follow the "Helmet" (hlm) pattern for UI variants.
+- **Architecture**: Standalone components only; use the `inject()` function.
 
 ### Git Workflow
 - Main branch: `main`

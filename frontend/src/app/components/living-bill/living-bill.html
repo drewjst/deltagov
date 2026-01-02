@@ -26,13 +26,17 @@
       </div>
 
       <!-- From Version Select -->
-      <brn-select [(ngModel)]="fromVersion" placeholder="Select version">
+      <brn-select
+        [ngModel]="store.selectedFromVersion()"
+        (ngModelChange)="onFromVersionChange($event)"
+        placeholder="Select version"
+      >
         <hlm-select-trigger class="w-44">
           <hlm-select-value />
         </hlm-select-trigger>
         <hlm-select-content>
-          @for (version of versions; track version.value) {
-            <hlm-option [value]="version.value">{{ version.label }}</hlm-option>
+          @for (version of store.fromVersionOptions(); track version.id) {
+            <hlm-option [value]="version.id">{{ version.label }}</hlm-option>
           }
         </hlm-select-content>
       </brn-select>
@@ -40,13 +44,17 @@
       <span class="text-muted-foreground">→</span>
 
       <!-- To Version Select -->
-      <brn-select [(ngModel)]="toVersion" placeholder="Select version">
+      <brn-select
+        [ngModel]="store.selectedToVersion()"
+        (ngModelChange)="onToVersionChange($event)"
+        placeholder="Select version"
+      >
         <hlm-select-trigger class="w-44">
           <hlm-select-value />
         </hlm-select-trigger>
         <hlm-select-content>
-          @for (version of versions; track version.value) {
-            <hlm-option [value]="version.value">{{ version.label }}</hlm-option>
+          @for (version of store.toVersionOptions(); track version.id) {
+            <hlm-option [value]="version.id">{{ version.label }}</hlm-option>
           }
         </hlm-select-content>
       </brn-select>
