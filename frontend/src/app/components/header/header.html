@@ -5,54 +5,62 @@
       <span class="text-primary">Delta</span><span class="text-muted-foreground">Gov</span>
     </div>
 
-    <!-- AI Search Bar using Spartan Command -->
-    <div class="flex-1 max-w-2xl mx-auto">
-      <hlm-command class="rounded-lg border shadow-sm">
-        <hlm-command-search>
-          <ng-icon hlm name="lucideSparkles" class="shrink-0 text-primary" size="sm" />
-          <ng-icon hlm name="lucideSearch" class="shrink-0 opacity-50" size="sm" />
+    <!-- Centered Search using Spartan + Tailwind -->
+    <div class="flex-1 flex justify-center">
+      <div class="w-full max-w-xl">
+        <label class="sr-only" for="site-search">Search bills</label>
+        <div class="relative">
           <input
-            type="text"
-            hlm-command-search-input
-            placeholder="Ask AI about any bill, amendment, or policy change..."
+            id="site-search"
+            type="search"
+            [value]="searchQuery()"
+            (input)="searchQuery.set($any($event.target).value)"
+            (keydown.enter)="onSearch()"
+            class="w-full rounded-lg border border-input bg-background py-2 pl-10 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="Search bills, amendments, or policies..."
+            aria-label="Search bills"
           />
-        </hlm-command-search>
-
-        <hlm-command-list>
-          <hlm-command-group>
-            <hlm-command-group-label>Suggestions</hlm-command-group-label>
-            <button hlm-command-item value="recent-bills">
-              <ng-icon hlm name="lucideFileText" hlmCommandIcon />
-              Search recent bills
-            </button>
-            <button hlm-command-item value="compare-versions">
-              <ng-icon hlm name="lucideGitCompare" hlmCommandIcon />
-              Compare bill versions
-            </button>
-            <button hlm-command-item value="spending-changes">
-              <ng-icon hlm name="lucideTrendingUp" hlmCommandIcon />
-              Find spending changes
-            </button>
-            <button hlm-command-item value="bill-history">
-              <ng-icon hlm name="lucideHistory" hlmCommandIcon />
-              View bill history
-            </button>
-          </hlm-command-group>
-        </hlm-command-list>
-
-        <div *brnCommandEmpty hlmCommandEmpty>No results found.</div>
-      </hlm-command>
+          <div class="absolute inset-y-0 start-3 flex items-center pointer-events-none">
+            <ng-icon hlm name="lucideSearch" class="text-muted-foreground" size="sm" />
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- User Profile -->
-    <div class="flex items-center gap-3">
-      <button class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent transition-colors">
+    <!-- User Menu -->
+    <hlm-menubar class="border-none bg-transparent">
+      <button
+        [hlmMenubarTrigger]="userMenu"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent transition-colors"
+      >
         <div class="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
           <ng-icon hlm name="lucideUser" class="text-primary-foreground" size="sm" />
         </div>
         <span class="text-sm font-medium hidden sm:inline">User</span>
         <ng-icon hlm name="lucideChevronDown" class="text-muted-foreground hidden sm:inline" size="sm" />
       </button>
-    </div>
+    </hlm-menubar>
+
+    <ng-template #userMenu>
+      <hlm-dropdown-menu class="w-48">
+        <hlm-dropdown-menu-label>My Account</hlm-dropdown-menu-label>
+        <hlm-dropdown-menu-separator />
+        <hlm-dropdown-menu-group>
+          <button hlmDropdownMenuItem>
+            <ng-icon hlm name="lucideUserCircle" hlmDropdownMenuIcon />
+            <span>Profile</span>
+          </button>
+          <button hlmDropdownMenuItem>
+            <ng-icon hlm name="lucideSettings" hlmDropdownMenuIcon />
+            <span>Settings</span>
+          </button>
+        </hlm-dropdown-menu-group>
+        <hlm-dropdown-menu-separator />
+        <button hlmDropdownMenuItem>
+          <ng-icon hlm name="lucideLogOut" hlmDropdownMenuIcon />
+          <span>Log out</span>
+        </button>
+      </hlm-dropdown-menu>
+    </ng-template>
   </div>
 </header>

@@ -29,6 +29,7 @@ Legislative bills often go through dozens of revisions before becoming law. Unde
 | Component      | Technology              |
 |----------------|-------------------------|
 | Frontend       | Angular 21              |
+| UI Components  | Spartan NG, Tailwind CSS |
 | Backend        | Go (Golang)             |
 | Database       | PostgreSQL with JSONB   |
 | Infrastructure | GCP (Cloud Run)         |
@@ -37,10 +38,22 @@ Legislative bills often go through dozens of revisions before becoming law. Unde
 
 ```
 /deltagov
-├── /backend         # Go API and ingestion workers
-├── /frontend        # Angular web application
-├── /deployments     # Docker and deployment configs
-└── LICENSE          # GNU AGPLv3
+├── /backend                   # Go API and ingestion workers
+│   ├── cmd/
+│   │   ├── api/              # Web API entry point
+│   │   └── ingestor/         # Background worker entry point
+│   └── internal/
+│       ├── api_client/       # Congress.gov API wrapper
+│       ├── database/         # PostgreSQL/GORM layer
+│       ├── models/           # Shared Go structs
+│       └── processor/        # Diff engine logic
+├── /frontend                  # Angular web application
+│   └── src/app/
+│       ├── components/       # UI components (diff viewer, bill list, etc.)
+│       ├── services/         # API communication & business logic
+│       └── models/           # TypeScript interfaces
+├── /deployments              # Docker and deployment configs
+└── LICENSE                    # GNU AGPLv3
 ```
 
 ## Getting Started

@@ -10,25 +10,34 @@
 
   <!-- Insights Content -->
   <div class="flex-1 overflow-auto p-4 space-y-4">
-    <!-- Summary Card -->
-    <div class="p-4 rounded-lg border border-border bg-background">
-      <div class="flex items-center gap-2 mb-2">
-        <lucide-icon [img]="LightbulbIcon" class="h-4 w-4 text-yellow-500" />
-        <span class="text-sm font-medium">Summary</span>
+
+    <!-- Summary Section -->
+    <section hlmCard>
+      <div hlmCardHeader>
+        <h3 hlmCardTitle>
+          <div class="flex items-center gap-2 mb-2">
+            <lucide-icon [img]="LightbulbIcon" class="h-4 w-4 text-yellow-500" />
+            <span class="text-sm font-medium">Summary</span>
+          </div>
+        </h3>
       </div>
-      <p class="text-sm text-muted-foreground">
+      <p hlmCardContent class="text-sm text-muted-foreground">
         This amendment increases infrastructure funding by <span class="text-green-400 font-medium">$250M (50%)</span>
         and extends the distribution timeline from 3 to 5 years. A new provision prioritizes rural communities.
       </p>
-    </div>
+    </section>
 
     <!-- Spending Impact -->
-    <div class="p-4 rounded-lg border border-border bg-background">
-      <div class="flex items-center gap-2 mb-3">
-        <lucide-icon [img]="DollarSignIcon" class="h-4 w-4 text-green-500" />
-        <span class="text-sm font-medium">Spending Impact</span>
+    <section hlmCard>
+      <div hlmCardHeader>
+        <h3 hlmCardTitle>
+          <div class="flex items-center gap-2 mb-3">
+            <lucide-icon [img]="DollarSignIcon" class="h-4 w-4 text-green-500" />
+            <span>Spending Impact</span>
+          </div>
+        </h3>
       </div>
-      <div class="space-y-2">
+      <div hlmCardContent class="space-y-2">
         <div class="flex justify-between text-sm">
           <span class="text-muted-foreground">Previous Total</span>
           <span>$500,000,000</span>
@@ -42,40 +51,50 @@
           <span class="text-green-400">+$250,000,000</span>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- Key Changes -->
-    <div class="p-4 rounded-lg border border-border bg-background">
-      <div class="flex items-center gap-2 mb-3">
-        <lucide-icon [img]="TrendingUpIcon" class="h-4 w-4 text-blue-500" />
-        <span class="text-sm font-medium">Key Changes</span>
+    <section hlmCard>
+      <div hlmCardHeader>
+        <h3 hlmCardTitle>
+          <div class="flex items-center gap-2 mb-3">
+            <lucide-icon [img]="TrendingUpIcon" class="h-4 w-4 text-blue-500" />
+            <span>Key Changes</span>
+          </div>
+        </h3>
       </div>
-      <ul class="space-y-2 text-sm">
-        <li class="flex items-start gap-2">
-          <span class="text-green-400 mt-0.5">•</span>
-          <span class="text-muted-foreground">Funding increased from $500M to $750M</span>
-        </li>
-        <li class="flex items-start gap-2">
-          <span class="text-yellow-400 mt-0.5">•</span>
-          <span class="text-muted-foreground">Timeline extended from 3 to 5 years</span>
-        </li>
-        <li class="flex items-start gap-2">
-          <span class="text-blue-400 mt-0.5">•</span>
-          <span class="text-muted-foreground">New rural community priority clause added</span>
-        </li>
-      </ul>
-    </div>
+      <div hlmCardContent>
+        <ul class="space-y-2 text-sm">
+          <li class="flex items-start gap-2">
+            <span class="text-green-400 mt-0.5">•</span>
+            <span class="text-muted-foreground">Funding increased from $500M to $750M</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-yellow-400 mt-0.5">•</span>
+            <span class="text-muted-foreground">Timeline extended from 3 to 5 years</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-blue-400 mt-0.5">•</span>
+            <span class="text-muted-foreground">New rural community priority clause added</span>
+          </li>
+        </ul>
+      </div>
+    </section>
 
     <!-- Potential Concerns -->
-    <div class="p-4 rounded-lg border border-yellow-500/30 bg-yellow-500/5">
-      <div class="flex items-center gap-2 mb-2">
-        <lucide-icon [img]="AlertTriangleIcon" class="h-4 w-4 text-yellow-500" />
-        <span class="text-sm font-medium text-yellow-500">Potential Concerns</span>
+    <section hlmCard class="border-yellow-500/30 bg-yellow-500/5">
+      <div hlmCardHeader>
+        <h3 hlmCardTitle>
+          <div class="flex items-center gap-2 mb-2">
+            <lucide-icon [img]="AlertTriangleIcon" class="h-4 w-4 text-yellow-500" />
+            <span class="text-sm font-medium text-yellow-500">Potential Concerns</span>
+          </div>
+        </h3>
       </div>
-      <p class="text-sm text-muted-foreground">
+      <p hlmCardContent class="text-sm text-muted-foreground">
         Extended timeline may delay project completion. "Rural communities" lacks specific definition criteria.
       </p>
-    </div>
+    </section>
   </div>
 
   <!-- AI Chat Input -->

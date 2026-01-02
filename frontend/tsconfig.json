@@ -27,6 +27,15 @@
       ],
       "@spartan-ng/helm/button": [
         "./libs/ui/button/src/index.ts"
+      ],
+      "@spartan-ng/helm/card": [
+        "./libs/ui/card/src/index.ts"
+      ],
+      "@spartan-ng/helm/menubar": [
+        "./libs/ui/menubar/src/index.ts"
+      ],
+      "@spartan-ng/helm/dropdown-menu": [
+        "./libs/ui/dropdown-menu/src/index.ts"
       ]
     }
   },
