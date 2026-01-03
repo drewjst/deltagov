@@ -7,6 +7,6 @@ import { Workspace } from './components/workspace/workspace';
   standalone: true,
   imports: [Header, Workspace],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrl: './app.scss',
 })
 export class App {}

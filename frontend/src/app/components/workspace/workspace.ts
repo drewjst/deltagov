@@ -7,6 +7,6 @@ import { InsightEngine } from '../insight-engine/insight-engine';
   standalone: true,
   imports: [LivingBill, InsightEngine],
   templateUrl: './workspace.html',
-  styleUrl: './workspace.scss'
+  styleUrl: './workspace.scss',
 })
 export class Workspace {}

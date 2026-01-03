@@ -1,13 +1,21 @@
 import { Component } from '@angular/core';
-import { LucideAngularModule, Brain, TrendingUp, DollarSign, AlertTriangle, Lightbulb, MessageSquare } from 'lucide-angular';
-import { HlmCard, HlmCardHeader, HlmCardTitle, HlmCardContent } from '@spartan-ng/helm/card';
+import {
+  LucideAngularModule,
+  Brain,
+  TrendingUp,
+  DollarSign,
+  AlertTriangle,
+  Lightbulb,
+  MessageSquare,
+} from 'lucide-angular';
+import { HlmCardImports } from '@spartan-ng/helm/card';
 
 @Component({
   selector: 'app-insight-engine',
   standalone: true,
-  imports: [LucideAngularModule, HlmCard],
+  imports: [LucideAngularModule, HlmCardImports],
   templateUrl: './insight-engine.html',
-  styleUrl: './insight-engine.scss'
+  styleUrl: './insight-engine.scss',
 })
 export class InsightEngine {
   protected readonly BrainIcon = Brain;

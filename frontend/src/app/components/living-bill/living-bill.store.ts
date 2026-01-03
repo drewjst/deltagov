@@ -1,11 +1,5 @@
 import { computed } from '@angular/core';
-import {
-  signalStore,
-  withState,
-  withComputed,
-  withMethods,
-  patchState,
-} from '@ngrx/signals';
+import { signalStore, withState, withComputed, withMethods, patchState } from '@ngrx/signals';
 
 // Types
 export interface BillVersion {
@@ -62,10 +56,10 @@ export const LivingBillStore = signalStore(
   withState(initialState),
   withComputed((store) => ({
     fromVersionOptions: computed(() =>
-      store.versions().filter((v) => v.id !== store.selectedToVersion())
+      store.versions().filter((v) => v.id !== store.selectedToVersion()),
     ),
     toVersionOptions: computed(() =>
-      store.versions().filter((v) => v.id !== store.selectedFromVersion())
+      store.versions().filter((v) => v.id !== store.selectedFromVersion()),
     ),
     selectedFromVersionLabel: computed(() => {
       const version = store.versions().find((v) => v.id === store.selectedFromVersion());
@@ -77,10 +71,10 @@ export const LivingBillStore = signalStore(
     }),
     hasVersions: computed(() => store.versions().length > 0),
     canCompareDiff: computed(
-      () => store.selectedFromVersion() !== '' && store.selectedToVersion() !== ''
+      () => store.selectedFromVersion() !== '' && store.selectedToVersion() !== '',
     ),
     isLoading: computed(
-      () => store.isLoadingBill() || store.isLoadingVersions() || store.isLoadingDiff()
+      () => store.isLoadingBill() || store.isLoadingVersions() || store.isLoadingDiff(),
     ),
   })),
   withMethods((store) => ({
@@ -138,5 +132,5 @@ export const LivingBillStore = signalStore(
     reset(): void {
       patchState(store, initialState);
     },
-  }))
+  })),
 );
