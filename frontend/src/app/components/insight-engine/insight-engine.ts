@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import {
   LucideAngularModule,
   Brain,
@@ -16,6 +16,7 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
   imports: [LucideAngularModule, HlmCardImports],
   templateUrl: './insight-engine.html',
   styleUrl: './insight-engine.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InsightEngine {
   protected readonly BrainIcon = Brain;

@@ -33,6 +33,6 @@ export class Header {
   protected readonly searchQuery = signal('');
 
   onSearch(): void {
-    console.log('Searching for:', this.searchQuery());
+    // TODO: Implement search functionality
   }
 }

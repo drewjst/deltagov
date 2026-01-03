@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Header } from './components/header/header';
 import { Workspace } from './components/workspace/workspace';
 
@@ -8,5 +8,6 @@ import { Workspace } from './components/workspace/workspace';
   imports: [Header, Workspace],
   templateUrl: './app.html',
   styleUrl: './app.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {}

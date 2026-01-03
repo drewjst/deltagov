@@ -1,5 +1,6 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 import { LucideAngularModule, GitCompare, FileText, Calendar, User } from 'lucide-angular';
 import { BrnSelectImports } from '@spartan-ng/brain/select';
 import { HlmSelectImports } from '@spartan-ng/helm/select';
@@ -8,9 +9,10 @@ import { LivingBillStore } from './living-bill.store';
 @Component({
   selector: 'app-living-bill',
   standalone: true,
-  imports: [FormsModule, LucideAngularModule, BrnSelectImports, HlmSelectImports],
+  imports: [FormsModule, ScrollingModule, LucideAngularModule, BrnSelectImports, HlmSelectImports],
   templateUrl: './living-bill.html',
   styleUrl: './living-bill.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LivingBill implements OnInit {
   protected readonly store = inject(LivingBillStore);

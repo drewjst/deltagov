@@ -21,6 +21,12 @@ export interface DiffSegment {
   text: string;
 }
 
+export interface DiffLine {
+  lineNumber: number;
+  type: 'insertion' | 'deletion' | 'unchanged';
+  text: string;
+}
+
 export interface Delta {
   fromVersion: string;
   toVersion: string;
@@ -76,6 +82,42 @@ export const LivingBillStore = signalStore(
     isLoading: computed(
       () => store.isLoadingBill() || store.isLoadingVersions() || store.isLoadingDiff(),
     ),
+    // Computed diff lines for virtual scrolling - will be derived from delta when available
+    diffLines: computed((): DiffLine[] => {
+      // Mock data until real diff engine is connected
+      const mockLines: DiffLine[] = [
+        { lineNumber: 1, type: 'unchanged', text: 'SECTION 1. SHORT TITLE.' },
+        { lineNumber: 2, type: 'unchanged', text: 'This Act may be cited as the "Federal Budget Act of 2025".' },
+        { lineNumber: 3, type: 'unchanged', text: '' },
+        { lineNumber: 4, type: 'unchanged', text: 'SECTION 2. APPROPRIATIONS.' },
+        { lineNumber: 5, type: 'deletion', text: '(a) There is appropriated $500,000,000 for infrastructure.' },
+        { lineNumber: 5, type: 'insertion', text: '(a) There is appropriated $750,000,000 for infrastructure.' },
+        { lineNumber: 6, type: 'unchanged', text: '' },
+        { lineNumber: 7, type: 'deletion', text: '(b) Funds shall be distributed over a period of 3 years.' },
+        { lineNumber: 7, type: 'insertion', text: '(b) Funds shall be distributed over a period of 5 years.' },
+        { lineNumber: 8, type: 'unchanged', text: '' },
+        { lineNumber: 9, type: 'insertion', text: '(c) Priority shall be given to rural communities.' },
+        { lineNumber: 10, type: 'unchanged', text: '' },
+        { lineNumber: 11, type: 'unchanged', text: 'SECTION 3. OVERSIGHT.' },
+        { lineNumber: 12, type: 'unchanged', text: 'The Government Accountability Office shall conduct annual audits.' },
+      ];
+      // Return mock data or parse delta.segments when available
+      return store.delta()?.segments
+        ? store.delta()!.segments.map((seg, idx) => ({
+            lineNumber: idx + 1,
+            type: seg.type,
+            text: seg.text,
+          }))
+        : mockLines;
+    }),
+    diffStats: computed(() => {
+      const lines = store.delta()?.segments ?? [];
+      return {
+        additions: lines.filter(l => l.type === 'insertion').length || 3,
+        deletions: lines.filter(l => l.type === 'deletion').length || 2,
+        total: lines.length || 14,
+      };
+    }),
   })),
   withMethods((store) => ({
     // Version selection

@@ -61,105 +61,41 @@
     </div>
   </div>
 
-  <!-- Diff Content -->
-  <div class="flex-1 overflow-auto p-4 font-mono text-sm">
-    <!-- Sample diff lines -->
-    <div class="space-y-0.5">
-      <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-        <span class="select-none mr-4 text-muted-foreground/50">1</span>
-        SECTION 1. SHORT TITLE.
-      </div>
-      <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-        <span class="select-none mr-4 text-muted-foreground/50">2</span>
-        This Act may be cited as the "Federal Budget Act of 2025".
-      </div>
-      <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-        <span class="select-none mr-4 text-muted-foreground/50">3</span>
-      </div>
-      <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-        <span class="select-none mr-4 text-muted-foreground/50">4</span>
-        SECTION 2. APPROPRIATIONS.
-      </div>
-      <div class="px-3 py-1 rounded bg-red-500/20 text-red-400 line-through">
-        <span class="select-none mr-4 text-red-400/50">5</span>
-        - (a) There is appropriated $500,000,000 for infrastructure.
-      </div>
-      <div class="px-3 py-1 rounded bg-green-500/20 text-green-400">
-        <span class="select-none mr-4 text-green-400/50">5</span>
-        + (a) There is appropriated $750,000,000 for infrastructure.
-      </div>
-      <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-        <span class="select-none mr-4 text-muted-foreground/50">6</span>
-      </div>
-      <div class="px-3 py-1 rounded bg-red-500/20 text-red-400 line-through">
-        <span class="select-none mr-4 text-red-400/50">7</span>
-        - (b) Funds shall be distributed over a period of 3 years.
-      </div>
-      <div class="px-3 py-1 rounded bg-green-500/20 text-green-400">
-        <span class="select-none mr-4 text-green-400/50">7</span>
-        + (b) Funds shall be distributed over a period of 5 years.
-      </div>
-      <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-        <span class="select-none mr-4 text-muted-foreground/50">8</span>
-      </div>
-      <div class="px-3 py-1 rounded bg-green-500/20 text-green-400">
-        <span class="select-none mr-4 text-green-400/50">9</span>
-        + (c) Priority shall be given to rural communities.
-      </div>
-      <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-        <span class="select-none mr-4 text-muted-foreground/50">10</span>
-      </div>
-      <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-        <span class="select-none mr-4 text-muted-foreground/50">11</span>
-        SECTION 3. OVERSIGHT.
-      </div>
-      <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-        <span class="select-none mr-4 text-muted-foreground/50">12</span>
-        The Government Accountability Office shall conduct annual audits.
-      </div>
-      <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-        <span class="select-none mr-4 text-muted-foreground/50">12</span>
-        The Government Accountability Office shall conduct annual audits.
-      </div>
-      <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-        <span class="select-none mr-4 text-muted-foreground/50">12</span>
-        The Government Accountability Office shall conduct annual audits.
-      </div>
-      <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-        <span class="select-none mr-4 text-muted-foreground/50">12</span>
-        The Government Accountability Office shall conduct annual audits.
-      </div>
-      <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-        <span class="select-none mr-4 text-muted-foreground/50">12</span>
-        The Government Accountability Office shall conduct annual audits.
-      </div>
-      <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-        <span class="select-none mr-4 text-muted-foreground/50">12</span>
-        The Government Accountability Office shall conduct annual audits.
-      </div>
-      <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-        <span class="select-none mr-4 text-muted-foreground/50">12</span>
-        The Government Accountability Office shall conduct annual audits.
-      </div>
-      <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-        <span class="select-none mr-4 text-muted-foreground/50">12</span>
-        The Government Accountability Office shall conduct annual audits.
-      </div>
-      <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-        <span class="select-none mr-4 text-muted-foreground/50">12</span>
-        The Government Accountability Office shall conduct annual audits.
-      </div>
-      <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-        <span class="select-none mr-4 text-muted-foreground/50">12</span>
-        The Government Accountability Office shall conduct annual audits.
-      </div>
+  <!-- Diff Content with Virtual Scrolling -->
+  <cdk-virtual-scroll-viewport
+    itemSize="28"
+    class="flex-1 font-mono text-sm"
+  >
+    <div class="p-4 space-y-0.5">
+      @for (line of store.diffLines(); track $index) {
+        @switch (line.type) {
+          @case ('deletion') {
+            <div class="px-3 py-1 rounded bg-red-500/20 text-red-400 line-through">
+              <span class="select-none mr-4 text-red-400/50">{{ line.lineNumber }}</span>
+              - {{ line.text }}
+            </div>
+          }
+          @case ('insertion') {
+            <div class="px-3 py-1 rounded bg-green-500/20 text-green-400">
+              <span class="select-none mr-4 text-green-400/50">{{ line.lineNumber }}</span>
+              + {{ line.text }}
+            </div>
+          }
+          @default {
+            <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
+              <span class="select-none mr-4 text-muted-foreground/50">{{ line.lineNumber }}</span>
+              {{ line.text }}
+            </div>
+          }
+        }
+      }
     </div>
-  </div>
+  </cdk-virtual-scroll-viewport>
 
   <!-- Diff Stats Footer -->
   <div class="p-3 border-t border-border bg-secondary/50 flex items-center gap-4 text-sm">
-    <span class="text-green-400">+3 additions</span>
-    <span class="text-red-400">-2 deletions</span>
-    <span class="text-muted-foreground">12 lines total</span>
+    <span class="text-green-400">+{{ store.diffStats().additions }} additions</span>
+    <span class="text-red-400">-{{ store.diffStats().deletions }} deletions</span>
+    <span class="text-muted-foreground">{{ store.diffStats().total }} lines total</span>
   </div>
 </div>
