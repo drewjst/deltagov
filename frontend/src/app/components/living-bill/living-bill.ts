@@ -4,7 +4,7 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
 import { LucideAngularModule, GitCompare, FileText, Calendar, User } from 'lucide-angular';
 import { BrnSelectImports } from '@spartan-ng/brain/select';
 import { HlmSelectImports } from '@spartan-ng/helm/select';
-import { LivingBillStore } from './living-bill.store';
+import { DiffLine, LivingBillStore } from './living-bill.store';
 
 @Component({
   selector: 'app-living-bill',
@@ -38,5 +38,9 @@ export class LivingBill implements OnInit {
 
   protected onToVersionChange(versionId: string): void {
     this.store.selectToVersion(versionId);
+  }
+
+  protected trackByLine(_: number, item: DiffLine): string {
+    return `${item.lineNumber}-${item.type}-${item.text.substring(0, 20)}`;
   }
 }

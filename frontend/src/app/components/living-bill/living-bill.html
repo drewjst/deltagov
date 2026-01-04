@@ -63,30 +63,28 @@
 
   <!-- Diff Content with Virtual Scrolling -->
   <cdk-virtual-scroll-viewport
-    itemSize="28"
-    class="flex-1 font-mono text-sm"
+    itemSize="30"
+    class="flex-1 font-mono text-sm p-4"
   >
-    <div class="p-4 space-y-0.5">
-      @for (line of store.diffLines(); track $index) {
-        @switch (line.type) {
-          @case ('deletion') {
-            <div class="px-3 py-1 rounded bg-red-500/20 text-red-400 line-through">
-              <span class="select-none mr-4 text-red-400/50">{{ line.lineNumber }}</span>
-              - {{ line.text }}
-            </div>
-          }
-          @case ('insertion') {
-            <div class="px-3 py-1 rounded bg-green-500/20 text-green-400">
-              <span class="select-none mr-4 text-green-400/50">{{ line.lineNumber }}</span>
-              + {{ line.text }}
-            </div>
-          }
-          @default {
-            <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
-              <span class="select-none mr-4 text-muted-foreground/50">{{ line.lineNumber }}</span>
-              {{ line.text }}
-            </div>
-          }
+    <div *cdkVirtualFor="let line of store.diffLines(); trackBy: trackByLine" class="mb-0.5">
+      @switch (line.type) {
+        @case ('deletion') {
+          <div class="px-3 py-1 rounded bg-red-500/20 text-red-400 line-through">
+            <span class="select-none mr-4 text-red-400/50">{{ line.lineNumber }}</span>
+            - {{ line.text }}
+          </div>
+        }
+        @case ('insertion') {
+          <div class="px-3 py-1 rounded bg-green-500/20 text-green-400">
+            <span class="select-none mr-4 text-green-400/50">{{ line.lineNumber }}</span>
+            + {{ line.text }}
+          </div>
+        }
+        @default {
+          <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground">
+            <span class="select-none mr-4 text-muted-foreground/50">{{ line.lineNumber }}</span>
+            {{ line.text }}
+          </div>
         }
       }
     </div>
