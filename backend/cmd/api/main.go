@@ -13,6 +13,8 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/drewjst/deltagov/internal/api"
+	"github.com/drewjst/deltagov/internal/congress"
+	"github.com/drewjst/deltagov/internal/database"
 )
 
 func main() {
@@ -23,6 +25,31 @@ func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
+	}
+
+	// Initialize database connection (optional for API, required for full functionality)
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL != "" {
+		dbConfig := database.DefaultConfig(databaseURL)
+		db, err := database.Connect(dbConfig)
+		if err != nil {
+			log.Printf("Warning: Failed to connect to database: %v", err)
+		} else {
+			defer database.Close(db)
+			log.Println("Connected to database")
+
+			// Run migrations
+			if err := database.Migrate(db); err != nil {
+				log.Printf("Warning: Failed to run migrations: %v", err)
+			} else {
+				log.Println("Database migrations complete")
+			}
+
+			// TODO: Inject db into route handlers for real data
+			_ = db
+		}
+	} else {
+		log.Println("Warning: DATABASE_URL not set, running with mock data only")
 	}
 
 	// Initialize Fiber app
@@ -48,6 +75,21 @@ func main() {
 
 	// Register API routes
 	api.RegisterRoutes(humaAPI)
+
+	// Initialize Congress client for diagnostic endpoints
+	congressAPIKey := os.Getenv("CONGRESS_API_KEY")
+	if congressAPIKey != "" {
+		congressClient, err := congress.NewClient(congress.WithAPIKey(congressAPIKey))
+		if err != nil {
+			log.Printf("Warning: Failed to create Congress client: %v", err)
+		} else {
+			diagnosticSvc := api.NewDiagnosticService(congressClient)
+			api.RegisterDiagnosticRoutes(humaAPI, diagnosticSvc)
+			log.Println("Diagnostic routes registered (Congress API client initialized)")
+		}
+	} else {
+		log.Println("Warning: CONGRESS_API_KEY not set, diagnostic routes disabled")
+	}
 
 	// Serve Scalar API documentation at /docs
 	app.Get("/docs", func(c *fiber.Ctx) error {

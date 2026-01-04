@@ -11,6 +11,8 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/drewjst/deltagov/internal/congress"
+	"github.com/drewjst/deltagov/internal/database"
+	"github.com/drewjst/deltagov/internal/ingestor"
 )
 
 func main() {
@@ -23,11 +25,38 @@ func main() {
 		log.Fatal("CONGRESS_API_KEY environment variable is required")
 	}
 
+	// Get database URL from environment
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		log.Fatal("DATABASE_URL environment variable is required")
+	}
+
 	// Get poll interval (default: 1 hour)
 	pollInterval := 1 * time.Hour
 
+	// Connect to database
+	dbConfig := database.DefaultConfig(databaseURL)
+	db, err := database.Connect(dbConfig)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer database.Close(db)
+	log.Println("Connected to database")
+
+	// Run migrations
+	if err := database.Migrate(db); err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
+	log.Println("Database migrations complete")
+
 	// Create Congress API client
-	client := congress.NewClient(apiKey)
+	congressClient, err := congress.New(apiKey)
+	if err != nil {
+		log.Fatalf("Failed to create Congress client: %v", err)
+	}
+
+	// Create ingestor service
+	ingestorSvc := ingestor.NewService(db, congressClient)
 
 	// Create context for graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())
@@ -47,8 +76,8 @@ func main() {
 	log.Printf("Polling Congress.gov API every %v", pollInterval)
 
 	// Run initial poll
-	if err := pollBills(ctx, client); err != nil {
-		log.Printf("Initial poll failed: %v", err)
+	if err := runIngestion(ctx, ingestorSvc); err != nil {
+		log.Printf("Initial ingestion failed: %v", err)
 	}
 
 	// Start polling loop
@@ -61,28 +90,33 @@ func main() {
 			log.Println("Ingestor stopped")
 			return
 		case <-ticker.C:
-			if err := pollBills(ctx, client); err != nil {
-				log.Printf("Poll failed: %v", err)
+			if err := runIngestion(ctx, ingestorSvc); err != nil {
+				log.Printf("Ingestion failed: %v", err)
 			}
 		}
 	}
 }
 
-// pollBills fetches bills from Congress.gov and stores new versions
-func pollBills(ctx context.Context, client *congress.Client) error {
-	log.Println("Polling Congress.gov for bill updates...")
+// runIngestion performs a single ingestion run.
+func runIngestion(ctx context.Context, svc *ingestor.Service) error {
+	log.Println("Starting ingestion run...")
 
-	// TODO: Implement actual polling logic
-	// 1. Fetch recent bills from Congress API
-	// 2. For each bill, compute content hash
-	// 3. Compare with stored hash
-	// 4. If different, store new version
-
-	bills, err := client.GetRecentBills(ctx)
+	result, err := svc.IngestRecentBills(ctx, 50)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("Fetched %d bills from Congress.gov", len(bills))
+	log.Printf("Ingestion complete: fetched=%d, created=%d, updated=%d, versions=%d, errors=%d",
+		result.BillsFetched,
+		result.BillsCreated,
+		result.BillsUpdated,
+		result.VersionsCreated,
+		len(result.Errors))
+
+	// Log any errors
+	for _, e := range result.Errors {
+		log.Printf("  Error: %v", e)
+	}
+
 	return nil
 }

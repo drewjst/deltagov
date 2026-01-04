@@ -53,7 +53,8 @@ func ComputeHash(content string) string {
 func Compute(textA, textB, versionA, versionB string) (*Delta, error) {
 	// Use go-udiff with Myers algorithm
 	edits := myers.ComputeEdits(textA, textB)
-	unifiedDiff, err := udiff.ToUnified("version_a", "version_b", textA, edits)
+	// 3 lines of context around changes (standard unified diff format)
+	unifiedDiff, err := udiff.ToUnified("version_a", "version_b", textA, edits, 3)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +110,7 @@ func ComputeWordLevel(textA, textB string) (*Delta, error) {
 	}
 
 	// Count changes
-	diffStr, err := udiff.ToUnified("a", "b", strings.Join(wordsA, "\n"), edits)
+	diffStr, err := udiff.ToUnified("a", "b", strings.Join(wordsA, "\n"), edits, 3)
 	if err != nil {
 		return nil, err
 	}
