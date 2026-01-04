@@ -1,8 +1,23 @@
-version: '3.8'
+# =============================================================================
+# DeltaGov Docker Compose
+# Local development environment with PostgreSQL, Go API, and Angular frontend
+# =============================================================================
+# Usage:
+#   Start all services:     docker-compose up -d
+#   View logs:              docker-compose logs -f
+#   Stop all services:      docker-compose down
+#   Rebuild and start:      docker-compose up -d --build
+#   Run ingestor once:      docker-compose run --rm ingestor
+# =============================================================================
 
 services:
-  postgres:
-    image: postgres:15
+  # ---------------------------------------------------------------------------
+  # Database: PostgreSQL 15
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:15-alpine
+    container_name: deltagov-db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: deltagov
       POSTGRES_PASSWORD: deltagov
@@ -11,11 +26,118 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deltagov -d deltagov"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - deltagov-network
 
+  # ---------------------------------------------------------------------------
+  # Backend: Go API Server
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: ..
+      dockerfile: deployments/docker/backend.Dockerfile
+    container_name: deltagov-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      RUN_MODE: api
+      DATABASE_URL: postgres://deltagov:deltagov@db:5432/deltagov?sslmode=disable
+      CONGRESS_API_KEY: ${CONGRESS_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - deltagov-network
+
+  # ---------------------------------------------------------------------------
+  # Ingestor: Background worker (run manually or on schedule)
+  # ---------------------------------------------------------------------------
+  ingestor:
+    build:
+      context: ..
+      dockerfile: deployments/docker/backend.Dockerfile
+    container_name: deltagov-ingestor
+    entrypoint: ["/app/ingestor"]
+    environment:
+      DATABASE_URL: postgres://deltagov:deltagov@db:5432/deltagov?sslmode=disable
+      CONGRESS_API_KEY: ${CONGRESS_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles:
+      - ingestor
+    networks:
+      - deltagov-network
+
+  # ---------------------------------------------------------------------------
+  # Frontend: Angular with Nginx
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ..
+      dockerfile: deployments/docker/frontend.Dockerfile
+    container_name: deltagov-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - deltagov-network
+
+  # ---------------------------------------------------------------------------
+  # Redis: Caching (optional, for future use)
+  # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
+    container_name: deltagov-redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - cache
+    networks:
+      - deltagov-network
 
+# -----------------------------------------------------------------------------
+# Networks
+# -----------------------------------------------------------------------------
+networks:
+  deltagov-network:
+    driver: bridge
+
+# -----------------------------------------------------------------------------
+# Volumes
+# -----------------------------------------------------------------------------
 volumes:
   postgres_data:
+    driver: local
+  redis_data:
+    driver: local

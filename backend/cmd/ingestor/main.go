@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"os"
 	"os/signal"
@@ -16,6 +17,11 @@ import (
 )
 
 func main() {
+	// Parse command-line flags
+	singleRun := flag.Bool("single-run", false, "Run ingestion once and exit (for Cloud Run Jobs)")
+	billLimit := flag.Int("limit", 50, "Maximum number of bills to fetch per run")
+	flag.Parse()
+
 	// Load .env file if present
 	_ = godotenv.Load()
 
@@ -31,8 +37,13 @@ func main() {
 		log.Fatal("DATABASE_URL environment variable is required")
 	}
 
-	// Get poll interval (default: 1 hour)
+	// Get poll interval from environment (default: 1 hour)
 	pollInterval := 1 * time.Hour
+	if intervalStr := os.Getenv("POLL_INTERVAL"); intervalStr != "" {
+		if parsed, err := time.ParseDuration(intervalStr); err == nil {
+			pollInterval = parsed
+		}
+	}
 
 	// Connect to database
 	dbConfig := database.DefaultConfig(databaseURL)
@@ -72,11 +83,22 @@ func main() {
 		cancel()
 	}()
 
-	log.Println("DeltaGov Ingestor starting...")
+	// Single-run mode for Cloud Run Jobs
+	if *singleRun {
+		log.Println("DeltaGov Ingestor running in single-run mode...")
+		if err := runIngestion(ctx, ingestorSvc, *billLimit); err != nil {
+			log.Fatalf("Ingestion failed: %v", err)
+		}
+		log.Println("Single-run ingestion complete, exiting")
+		return
+	}
+
+	// Continuous polling mode
+	log.Println("DeltaGov Ingestor starting in continuous mode...")
 	log.Printf("Polling Congress.gov API every %v", pollInterval)
 
 	// Run initial poll
-	if err := runIngestion(ctx, ingestorSvc); err != nil {
+	if err := runIngestion(ctx, ingestorSvc, *billLimit); err != nil {
 		log.Printf("Initial ingestion failed: %v", err)
 	}
 
@@ -90,7 +112,7 @@ func main() {
 			log.Println("Ingestor stopped")
 			return
 		case <-ticker.C:
-			if err := runIngestion(ctx, ingestorSvc); err != nil {
+			if err := runIngestion(ctx, ingestorSvc, *billLimit); err != nil {
 				log.Printf("Ingestion failed: %v", err)
 			}
 		}
@@ -98,10 +120,10 @@ func main() {
 }
 
 // runIngestion performs a single ingestion run.
-func runIngestion(ctx context.Context, svc *ingestor.Service) error {
-	log.Println("Starting ingestion run...")
+func runIngestion(ctx context.Context, svc *ingestor.Service, limit int) error {
+	log.Printf("Starting ingestion run (limit=%d)...", limit)
 
-	result, err := svc.IngestRecentBills(ctx, 50)
+	result, err := svc.IngestRecentBills(ctx, limit)
 	if err != nil {
 		return err
 	}
