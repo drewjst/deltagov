@@ -1,47 +1,78 @@
 <header
-  class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+  class="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
 >
-  <div class="container flex h-14 items-center">
+  <div class="container flex h-16 items-center px-4">
     <!-- Logo -->
-    <a href="/" class="mr-6 flex items-center gap-2">
+    <a href="/" class="mr-8 flex items-center gap-2">
       <img src="/logos/delta-gov.png" alt="DeltaGov" class="h-8 w-auto" />
-      <span class="font-bold text-lg hidden sm:inline-block">DeltaGov</span>
+      <span class="font-bold text-xl tracking-tight">DeltaGov</span>
     </a>
 
     <!-- Navigation Links -->
     <nav class="flex items-center gap-6 text-sm font-medium">
       <a
         href="/mission"
-        class="transition-colors hover:text-foreground/80 text-foreground/60"
-        >Mission</a
+        class="flex items-center gap-1 transition-colors hover:text-foreground/80 text-foreground/80"
       >
+        Mission
+        <ng-icon name="lucideChevronDown" size="sm" class="opacity-50" />
+      </a>
       <a
         href="/roadmap"
-        class="transition-colors hover:text-foreground/80 text-foreground/60"
+        class="transition-colors hover:text-foreground/80 text-foreground/80"
         >Roadmap</a
       >
       <a
         href="/community"
-        class="transition-colors hover:text-foreground/80 text-foreground/60"
-        >Community</a
+        class="flex items-center gap-1 transition-colors hover:text-foreground/80 text-foreground/80"
+      >
+        Community
+        <ng-icon name="lucideChevronDown" size="sm" class="opacity-50" />
+      </a>
+      <a
+        href="/docs"
+        class="transition-colors hover:text-foreground/80 text-foreground/80"
+        >Docs</a
       >
     </nav>
 
     <!-- Right Actions -->
-    <div class="flex-1 flex justify-end items-center gap-2">
+    <div class="flex-1 flex justify-end items-center gap-4">
+      <!-- Socials -->
+      <div class="flex items-center gap-4 text-foreground/80">
+        <a href="https://discord.gg/deltagov" target="_blank" class="hover:text-foreground">
+          <ng-icon name="lucideGamepad2" size="sm" />
+        </a>
+        <a href="https://github.com/deltagov" target="_blank" class="flex items-center gap-1.5 hover:text-foreground">
+          <ng-icon name="lucideGithub" size="sm" />
+          <span class="text-xs font-semibold">34.3k</span>
+        </a>
+      </div>
+
+      <!-- Divider -->
+      <div class="h-4 w-px bg-border"></div>
+
+      <!-- Auth -->
       <a
         href="/login"
-        hlmBtn
-        variant="ghost"
-        class="text-sm font-medium text-foreground/60 hover:text-foreground/80 px-4 py-2"
+        class="text-sm font-medium text-foreground/80 hover:text-foreground"
         >Log in</a
       >
-      <a
-        href="/signup"
-        hlmBtn
-        class="text-sm font-medium bg-foreground text-background hover:bg-foreground/90 px-4 py-2 rounded-md"
-        >Get Started</a
-      >
+
+      <div class="flex items-center gap-2">
+        <a
+          href="/contact"
+          hlmBtn
+          class="bg-muted hover:bg-muted/80 text-foreground text-sm font-medium px-4 py-2 rounded-md h-9"
+          >Contact sales</a
+        >
+        <a
+          href="/signup"
+          hlmBtn
+          class="bg-foreground text-background hover:bg-foreground/90 text-sm font-medium px-4 py-2 rounded-md h-9"
+          >Sign up</a
+        >
+      </div>
     </div>
   </div>
 </header>
