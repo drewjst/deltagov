@@ -1,7 +1,9 @@
 <div class="h-screen flex flex-col">
-  <!-- Tier 1: Sticky Header with AI Search Bar -->
+  <!-- Global Header with Navigation -->
   <app-header />
 
-  <!-- Tier 2: Workspace (Side-by-side panes) -->
-  <app-workspace />
+  <!-- Route Content -->
+  <main class="flex-1 overflow-hidden">
+    <router-outlet />
+  </main>
 </div>

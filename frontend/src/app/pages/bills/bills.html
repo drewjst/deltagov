@@ -1,0 +1,28 @@
+<div class="flex flex-col h-full">
+  <!-- Search Bar -->
+  <div class="px-6 py-4 border-b border-border/40 bg-background">
+    <div class="max-w-2xl mx-auto">
+      <label class="sr-only" for="bill-search">Search bills</label>
+      <div class="relative">
+        <input
+          id="bill-search"
+          type="search"
+          [value]="searchQuery()"
+          (input)="searchQuery.set($any($event.target).value)"
+          (keydown.enter)="onSearch()"
+          class="w-full rounded-lg border border-input bg-background py-2.5 pl-10 pr-4 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+          placeholder="Search bills, amendments, or policies..."
+          aria-label="Search bills"
+        />
+        <div class="absolute inset-y-0 start-3 flex items-center pointer-events-none">
+          <ng-icon hlm name="lucideSearch" class="text-muted-foreground" size="sm" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Workspace Content -->
+  <div class="flex-1 overflow-hidden">
+    <app-workspace />
+  </div>
+</div>

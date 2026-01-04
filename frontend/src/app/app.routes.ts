@@ -1,3 +1,29 @@
 import { Routes } from '@angular/router';
 
-export const routes: Routes = [];
+export const routes: Routes = [
+  {
+    path: '',
+    redirectTo: 'bills',
+    pathMatch: 'full',
+  },
+  {
+    path: 'bills',
+    loadComponent: () =>
+      import('./pages/bills/bills').then((m) => m.BillsPage),
+  },
+  {
+    path: 'history',
+    loadComponent: () =>
+      import('./pages/history/history').then((m) => m.HistoryPage),
+  },
+  {
+    path: 'influence',
+    loadComponent: () =>
+      import('./pages/influence/influence').then((m) => m.InfluencePage),
+  },
+  {
+    path: 'money-trail',
+    loadComponent: () =>
+      import('./pages/money-trail/money-trail').then((m) => m.MoneyTrailPage),
+  },
+];

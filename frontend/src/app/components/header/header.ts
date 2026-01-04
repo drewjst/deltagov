@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  lucideSearch,
   lucideChevronDown,
   lucideSettings,
   lucideLogOut,
@@ -11,22 +11,21 @@ import { HlmAvatarImports } from '@spartan-ng/helm/avatar';
 import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu';
 import { HlmIcon } from '@spartan-ng/helm/icon';
 import { HlmMenubarImports } from '@spartan-ng/helm/menubar';
-import { HlmTypographyImports } from '@spartan-ng/helm/typography';
 
 @Component({
   selector: 'app-header',
   standalone: true,
   imports: [
+    RouterLink,
+    RouterLinkActive,
     NgIcon,
     HlmAvatarImports,
     HlmDropdownMenuImports,
     HlmIcon,
     HlmMenubarImports,
-    HlmTypographyImports,
   ],
   providers: [
     provideIcons({
-      lucideSearch,
       lucideChevronDown,
       lucideSettings,
       lucideLogOut,
@@ -38,9 +37,10 @@ import { HlmTypographyImports } from '@spartan-ng/helm/typography';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Header {
-  protected readonly searchQuery = signal('');
-
-  onSearch(): void {
-    // TODO: Implement search functionality
-  }
+  protected readonly navLinks = [
+    { path: '/bills', label: 'Bills' },
+    { path: '/history', label: 'History' },
+    { path: '/influence', label: 'Influence' },
+    { path: '/money-trail', label: 'Money Trail' },
+  ];
 }
