@@ -1,0 +1,54 @@
+<section class="flex flex-col items-center justify-center pt-24 pb-12 text-center md:pt-32">
+  <div class="container px-4 md:px-6">
+    <div class="space-y-4">
+      <h1 class="text-4xl font-serif font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+        Git for Government
+      </h1>
+      <p class="mx-auto max-w-[700px] text-muted-foreground md:text-xl font-sans">
+        Track, version, and visualize changes in U.S. legislative bills. Transparency through version control.
+      </p>
+    </div>
+    <div class="space-y-4 mt-8">
+      <button hlmBtn class="px-8 py-6 text-lg rounded-full">See the diffs</button>
+    </div>
+  </div>
+</section>
+
+<!-- Visual Teaser / Mock Diff -->
+<section class="container px-4 py-12 md:px-6 md:py-16">
+  <div class="mx-auto max-w-5xl rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
+    <div class="flex items-center gap-2 border-b bg-muted/50 px-4 py-3">
+      <div class="flex gap-1.5">
+        <div class="h-3 w-3 rounded-full bg-red-500/80"></div>
+        <div class="h-3 w-3 rounded-full bg-yellow-500/80"></div>
+        <div class="h-3 w-3 rounded-full bg-green-500/80"></div>
+      </div>
+      <div class="ml-4 text-xs text-muted-foreground font-mono">H.R. 5376 - Inflation Reduction Act</div>
+    </div>
+    <div class="grid grid-cols-2 divide-x divide-border font-mono text-sm">
+      <!-- Original Side -->
+      <div class="bg-background p-4 overflow-x-auto">
+        <div class="text-xs text-muted-foreground mb-4 select-none">v1.0.0 (Introduced)</div>
+        <div class="space-y-1">
+          <p class="text-muted-foreground/50">101. SHORT TITLE.</p>
+          <p>This Act may be cited as the <span class="bg-red-200/20 text-red-700 decoration-red-700 line-through decoration-2">"Build Back Better Act"</span>.</p>
+          <br>
+          <p class="text-muted-foreground/50">SEC. 102. APPROPRIATIONS.</p>
+          <p>There is appropriated <span class="bg-red-200/20 text-red-700 decoration-red-700 line-through decoration-2">$3,500,000,000,000</span> for fiscal year 2022.</p>
+        </div>
+      </div>
+
+      <!-- Modified Side -->
+      <div class="bg-background p-4 overflow-x-auto">
+        <div class="text-xs text-muted-foreground mb-4 select-none">v2.1.0 (Enrolled)</div>
+        <div class="space-y-1">
+          <p class="text-muted-foreground/50">101. SHORT TITLE.</p>
+          <p>This Act may be cited as the <span class="bg-green-200/20 text-green-700">"Inflation Reduction Act of 2022"</span>.</p>
+          <br>
+          <p class="text-muted-foreground/50">SEC. 102. APPROPRIATIONS.</p>
+          <p>There is appropriated <span class="bg-green-200/20 text-green-700">$739,000,000,000</span> for fiscal year 2022.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

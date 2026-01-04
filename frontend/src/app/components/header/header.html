@@ -1,74 +1,47 @@
 <header
   class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
 >
-  <div class="flex h-16 items-center px-4 gap-4">
+  <div class="container flex h-14 items-center">
     <!-- Logo -->
-    <a href="/" class="flex items-center gap-2">
+    <a href="/" class="mr-6 flex items-center gap-2">
       <img src="/logos/delta-gov.png" alt="DeltaGov" class="h-8 w-auto" />
-      <span class="sr-only">DeltaGov</span>
+      <span class="font-bold text-lg hidden sm:inline-block">DeltaGov</span>
     </a>
 
-    <!-- Centered Search using Spartan + Tailwind -->
-    <div class="flex-1 flex justify-center">
-      <div class="w-full max-w-xl">
-        <label class="sr-only" for="site-search">Search bills</label>
-        <div class="relative">
-          <input
-            id="site-search"
-            type="search"
-            [value]="searchQuery()"
-            (input)="searchQuery.set($any($event.target).value)"
-            (keydown.enter)="onSearch()"
-            class="w-full rounded-lg border border-input bg-background py-2 pl-10 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            placeholder="Search bills, amendments, or policies..."
-            aria-label="Search bills"
-          />
-          <div class="absolute inset-y-0 start-3 flex items-center pointer-events-none">
-            <ng-icon hlm name="lucideSearch" class="text-muted-foreground" size="sm" />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- User Menu -->
-    <hlm-menubar class="border-none bg-transparent">
-      <button
-        [hlmMenubarTrigger]="userMenu"
-        class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent transition-colors"
+    <!-- Navigation Links -->
+    <nav class="flex items-center gap-6 text-sm font-medium">
+      <a
+        href="/mission"
+        class="transition-colors hover:text-foreground/80 text-foreground/60"
+        >Mission</a
       >
-        <hlm-avatar size="sm" class="bg-primary">
-          <span hlmAvatarFallback class="bg-primary text-primary-foreground text-xs">U</span>
-        </hlm-avatar>
-        <span hlmSmall class="hidden sm:inline">User</span>
-        <ng-icon
-          hlm
-          name="lucideChevronDown"
-          class="text-muted-foreground hidden sm:inline"
-          size="sm"
-        />
-      </button>
-    </hlm-menubar>
+      <a
+        href="/roadmap"
+        class="transition-colors hover:text-foreground/80 text-foreground/60"
+        >Roadmap</a
+      >
+      <a
+        href="/community"
+        class="transition-colors hover:text-foreground/80 text-foreground/60"
+        >Community</a
+      >
+    </nav>
 
-    <ng-template #userMenu>
-      <hlm-dropdown-menu class="w-48">
-        <hlm-dropdown-menu-label>My Account</hlm-dropdown-menu-label>
-        <hlm-dropdown-menu-separator />
-        <hlm-dropdown-menu-group>
-          <button hlmDropdownMenuItem>
-            <ng-icon hlm name="lucideUserCircle" hlmDropdownMenuIcon />
-            <span>Profile</span>
-          </button>
-          <button hlmDropdownMenuItem>
-            <ng-icon hlm name="lucideSettings" hlmDropdownMenuIcon />
-            <span>Settings</span>
-          </button>
-        </hlm-dropdown-menu-group>
-        <hlm-dropdown-menu-separator />
-        <button hlmDropdownMenuItem>
-          <ng-icon hlm name="lucideLogOut" hlmDropdownMenuIcon />
-          <span>Log out</span>
-        </button>
-      </hlm-dropdown-menu>
-    </ng-template>
+    <!-- Right Actions -->
+    <div class="flex-1 flex justify-end items-center gap-2">
+      <a
+        href="/login"
+        hlmBtn
+        variant="ghost"
+        class="text-sm font-medium text-foreground/60 hover:text-foreground/80 px-4 py-2"
+        >Log in</a
+      >
+      <a
+        href="/signup"
+        hlmBtn
+        class="text-sm font-medium bg-foreground text-background hover:bg-foreground/90 px-4 py-2 rounded-md"
+        >Get Started</a
+      >
+    </div>
   </div>
 </header>
