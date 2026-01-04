@@ -3,7 +3,7 @@
 # Multi-stage build with Angular 21 and Nginx Alpine
 # =============================================================================
 # Build: docker build -f deployments/docker/frontend.Dockerfile -t deltagov-frontend .
-# Run: docker run -p 80:80 deltagov-frontend
+# Run: docker run -p 8080:8080 deltagov-frontend
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -46,30 +46,28 @@ LABEL org.opencontainers.image.source="https://github.com/drewjst/deltagov"
 LABEL org.opencontainers.image.description="DeltaGov Frontend"
 LABEL org.opencontainers.image.licenses="AGPL-3.0"
 
-# Remove default nginx config
-RUN rm /etc/nginx/conf.d/default.conf
-
-# Copy custom nginx configuration
-COPY deployments/docker/nginx.conf /etc/nginx/conf.d/default.conf
+# Replace entire nginx config (not just server block)
+# This config is optimized for non-root user
+COPY deployments/docker/nginx.conf /etc/nginx/nginx.conf
 
 # Copy built Angular app from builder stage
-# Angular 17+ with application builder outputs to dist/<project>/browser
 COPY --from=builder /app/dist/frontend/browser /usr/share/nginx/html
 
-# Create non-root user for security
+# Create non-root user and set permissions for all nginx paths
 RUN adduser -D -g '' nginxuser && \
     chown -R nginxuser:nginxuser /usr/share/nginx/html && \
     chown -R nginxuser:nginxuser /var/cache/nginx && \
     chown -R nginxuser:nginxuser /var/log/nginx && \
-    touch /var/run/nginx.pid && \
-    chown -R nginxuser:nginxuser /var/run/nginx.pid
+    chown -R nginxuser:nginxuser /etc/nginx && \
+    mkdir -p /tmp/client_temp /tmp/proxy_temp /tmp/fastcgi_temp /tmp/uwsgi_temp /tmp/scgi_temp && \
+    chown -R nginxuser:nginxuser /tmp/*_temp
 
-# Expose port 80
-EXPOSE 80
+# Expose port 8080 (non-root compatible, Cloud Run default)
+EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1
 
 # Run as non-root user
 USER nginxuser
