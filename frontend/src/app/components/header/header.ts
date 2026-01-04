@@ -11,11 +11,19 @@ import { HlmAvatarImports } from '@spartan-ng/helm/avatar';
 import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu';
 import { HlmIcon } from '@spartan-ng/helm/icon';
 import { HlmMenubarImports } from '@spartan-ng/helm/menubar';
+import { HlmTypographyImports } from '@spartan-ng/helm/typography';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [NgIcon, HlmAvatarImports, HlmDropdownMenuImports, HlmIcon, HlmMenubarImports],
+  imports: [
+    NgIcon,
+    HlmAvatarImports,
+    HlmDropdownMenuImports,
+    HlmIcon,
+    HlmMenubarImports,
+    HlmTypographyImports,
+  ],
   providers: [
     provideIcons({
       lucideSearch,
