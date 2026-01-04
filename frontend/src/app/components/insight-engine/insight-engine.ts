@@ -9,11 +9,12 @@ import {
   MessageSquare,
 } from 'lucide-angular';
 import { HlmCardImports } from '@spartan-ng/helm/card';
+import { HlmTypographyImports } from '@spartan-ng/helm/typography';
 
 @Component({
   selector: 'app-insight-engine',
   standalone: true,
-  imports: [LucideAngularModule, HlmCardImports],
+  imports: [LucideAngularModule, HlmCardImports, HlmTypographyImports],
   templateUrl: './insight-engine.html',
   styleUrl: './insight-engine.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

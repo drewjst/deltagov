@@ -3,16 +3,16 @@
   <div class="p-4 border-b border-border">
     <div class="flex items-center gap-3 mb-2">
       <lucide-icon [img]="FileTextIcon" class="h-5 w-5 text-primary" />
-      <h1 class="text-lg font-semibold">H.R. 1234 - Federal Budget Act of 2025</h1>
+      <h3 hlmH3>H.R. 1234 - Federal Budget Act of 2025</h3>
     </div>
-    <div class="flex items-center gap-4 text-sm text-muted-foreground">
+    <div class="flex items-center gap-4">
       <div class="flex items-center gap-1">
-        <lucide-icon [img]="UserIcon" class="h-4 w-4" />
-        <span>Rep. Jane Smith (D-CA)</span>
+        <lucide-icon [img]="UserIcon" class="h-4 w-4 text-muted-foreground" />
+        <span hlmMuted>Rep. Jane Smith (D-CA)</span>
       </div>
       <div class="flex items-center gap-1">
-        <lucide-icon [img]="CalendarIcon" class="h-4 w-4" />
-        <span>Updated Dec 15, 2025</span>
+        <lucide-icon [img]="CalendarIcon" class="h-4 w-4 text-muted-foreground" />
+        <span hlmMuted>Updated Dec 15, 2025</span>
       </div>
     </div>
   </div>
@@ -22,7 +22,7 @@
     <div class="flex items-center gap-4">
       <div class="flex items-center gap-2">
         <lucide-icon [img]="GitCompareIcon" class="h-4 w-4 text-muted-foreground" />
-        <span class="text-sm text-muted-foreground">Comparing:</span>
+        <span hlmMuted>Comparing:</span>
       </div>
 
       <!-- From Version Select -->
@@ -91,9 +91,9 @@
   </cdk-virtual-scroll-viewport>
 
   <!-- Diff Stats Footer -->
-  <div class="p-3 border-t border-border bg-secondary/50 flex items-center gap-4 text-sm">
-    <span class="text-green-400">+{{ store.diffStats().additions }} additions</span>
-    <span class="text-red-400">-{{ store.diffStats().deletions }} deletions</span>
-    <span class="text-muted-foreground">{{ store.diffStats().total }} lines total</span>
+  <div class="p-3 border-t border-border bg-secondary/50 flex items-center gap-4">
+    <span hlmSmall class="text-green-400">+{{ store.diffStats().additions }} additions</span>
+    <span hlmSmall class="text-red-400">-{{ store.diffStats().deletions }} deletions</span>
+    <span hlmMuted>{{ store.diffStats().total }} lines total</span>
   </div>
 </div>

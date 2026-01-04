@@ -4,12 +4,20 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
 import { LucideAngularModule, GitCompare, FileText, Calendar, User } from 'lucide-angular';
 import { BrnSelectImports } from '@spartan-ng/brain/select';
 import { HlmSelectImports } from '@spartan-ng/helm/select';
+import { HlmTypographyImports } from '@spartan-ng/helm/typography';
 import { DiffLine, LivingBillStore } from './living-bill.store';
 
 @Component({
   selector: 'app-living-bill',
   standalone: true,
-  imports: [FormsModule, ScrollingModule, LucideAngularModule, BrnSelectImports, HlmSelectImports],
+  imports: [
+    FormsModule,
+    ScrollingModule,
+    LucideAngularModule,
+    BrnSelectImports,
+    HlmSelectImports,
+    HlmTypographyImports,
+  ],
   templateUrl: './living-bill.html',
   styleUrl: './living-bill.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
