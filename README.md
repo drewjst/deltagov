@@ -39,27 +39,119 @@ Laws are the source code of society. Yet, while we track every semicolon in a mo
 ```
 /deltagov
 ├── /backend                        # Go API and ingestion workers
-│   ├── cmd/
-│   │   ├── api/                    # Web API entry point
-│   │   └── ingestor/               # Background worker entry point
-│   └── internal/
-│       ├── api_client/             # Congress.gov API wrapper
-│       ├── database/               # PostgreSQL/GORM layer
-│       ├── models/                 # Shared Go structs
-│       └── processor/              # Diff engine logic
-├── /frontend                       # Angular web application
-│   └── src/app/
-│       ├── components/             # UI components (diff viewer, bill list, etc.)
-│       ├── services/               # API communication & business logic
-│       └── models/                 # TypeScript interfaces
+│   ├── /cmd
+│   │   ├── /api                    # REST API entry point (Fiber + Huma)
+│   │   └── /ingestor               # Background worker for Congress.gov polling
+│   └── /internal
+│       ├── /api                    # Route handlers and request/response types
+│       ├── /config                 # Environment configuration loader
+│       ├── /congress               # Congress.gov API V3 client (streaming JSON)
+│       ├── /diff_engine            # Myers diff algorithm implementation
+│       └── /models                 # GORM database models (Bill, Version, Delta)
+├── /frontend                       # Angular 21 web application
+│   ├── /src/app
+│   │   ├── /components             # Standalone UI components
+│   │   │   ├── /header             # App header with search
+│   │   │   ├── /workspace          # Main layout container
+│   │   │   ├── /living-bill        # Diff viewer with virtual scrolling
+│   │   │   └── /insight-engine     # AI analysis pane
+│   │   └── app.ts                  # Root component
+│   └── /libs/ui                    # Spartan NG component library
 ├── /deployments
-│   ├── /docker
-│   │   ├── api.Dockerfile          # Multi-stage Distroless build
-│   │   ├── ingestor.Dockerfile     # Same binary, different entrypoint
-│   │   └── frontend.Dockerfile     # Nginx-based static host
-│   ├── docker-compose.yml          # For local dev orchestration
-│   └── cloud-run.sh                # Helper script for gcloud CLI deploys
+│   ├── Dockerfile                  # Multi-stage Go build
+│   └── docker-compose.yml          # Local dev (PostgreSQL + Redis)
+├── CLAUDE.md                       # AI development guidelines
+├── ROADMAP.md                      # Suggested improvements and actions
 └── LICENSE                         # GNU AGPLv3
+```
+
+## Architecture
+
+### Component Overview
+
+```mermaid
+graph TB
+    subgraph External["External Services"]
+        CONGRESS["Congress.gov API V3"]
+    end
+
+    subgraph Backend["Backend (Go)"]
+        API["REST API<br/>Fiber + Huma"]
+        INGESTOR["Ingestor Worker"]
+        CONGRESS_CLIENT["Congress Client"]
+        DIFF_ENGINE["Diff Engine<br/>Myers Algorithm"]
+        DB[(PostgreSQL)]
+    end
+
+    subgraph Frontend["Frontend (Angular 21)"]
+        STORE["SignalStore"]
+        LIVING["Living Bill<br/>Virtual Scroll"]
+        INSIGHT["Insight Engine"]
+    end
+
+    CONGRESS --> CONGRESS_CLIENT
+    INGESTOR --> CONGRESS_CLIENT
+    CONGRESS_CLIENT --> DB
+    API <--> DB
+    API --> DIFF_ENGINE
+
+    STORE <-->|HTTP| API
+    STORE --> LIVING
+    STORE --> INSIGHT
+```
+
+### Data Flow
+
+```mermaid
+flowchart LR
+    subgraph Ingestion["Ingestion Pipeline"]
+        A[Poll Congress.gov] --> B{New Content?}
+        B -->|Yes| C[Compute Hash]
+        C --> D[Store Version]
+        B -->|No| E[Sleep]
+    end
+
+    subgraph Diffing["Diff Computation"]
+        F[Fetch Versions] --> G[Myers Diff]
+        G --> H[Store Delta]
+    end
+
+    subgraph Display["Visualization"]
+        I[Load Delta] --> J[Virtual Scroll]
+        J --> K[Color-coded Diff]
+    end
+
+    D --> F
+    H --> I
+```
+
+### Request Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              REQUEST FLOW                                │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  Browser                     API Server                    Database
+  ═══════                     ══════════                    ════════
+
+  GET /api/v1/bills ─────────────────>
+                              Query bills table
+                              <───────────────────────────────────
+  <────────────────── JSON [{bills}]
+
+  GET /api/v1/bills/{id}/versions ───>
+                              Query versions by bill_id
+                              <───────────────────────────────────
+  <────────────────── JSON [{versions}]
+
+  GET /api/v1/bills/{id}/diff/{a}/{b} >
+                              Check delta cache
+                              <───────────────────────────────────
+                              If miss: compute Myers diff
+                              Store delta for future
+                              ────────────────────────────────────>
+  <────────────────── JSON {segments, stats}
 ```
 
 ## Getting Started
@@ -117,6 +209,18 @@ Get a Congress.gov API key at: https://api.congress.gov/sign-up/
 3. **Diffing** — Uses Myers diff algorithm for minimal edit distance
 4. **Visualization** — Renders changes in an intuitive diff viewer
 
+## API Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/health` | Health check |
+| GET | `/api/v1/bills` | List all tracked bills |
+| GET | `/api/v1/bills/{id}` | Get bill details |
+| GET | `/api/v1/bills/{id}/versions` | Get bill versions |
+| GET | `/api/v1/bills/{id}/diff/{from}/{to}` | Compute diff between versions |
+| GET | `/docs` | Interactive API documentation (Scalar) |
+| GET | `/openapi.json` | OpenAPI 3.1 specification |
+
 ## Contributing
 
 We welcome contributions! Please see our contributing guidelines (coming soon).
@@ -125,23 +229,7 @@ We welcome contributions! Please see our contributing guidelines (coming soon).
 
 For detailed development instructions and coding conventions, see [CLAUDE.md](./CLAUDE.md).
 
-graph TD
-    subgraph "External Data"
-        C[Congress.gov API V3]
-    end
-
-    subgraph "DeltaGov Backend (Go)"
-        I[Ingestor Worker] -->|Poll & Hash| H{Content Change?}
-        H -->|Yes| DB[(PostgreSQL)]
-        H -->|No| S[Sleep/Wait]
-        D[Diff Engine] <-->|Myers Algorithm| DB
-        A[REST API] <--> DB
-    end
-
-    subgraph "Frontend (Angular 21)"
-        F[SignalStore] <--> A
-        F --> V[Spartan UI / Diff Viewer]
-    end
+For planned improvements and known issues, see [ROADMAP.md](./ROADMAP.md).
 
 ## License
 
@@ -152,12 +240,16 @@ DeltaGov is open source under the [GNU Affero General Public License v3.0](LICEN
 ## Roadmap
 
 - [x] Project scaffolding
-- [ ] Congress.gov API integration
-- [ ] Basic diff engine (Myers algorithm)
-- [ ] Bill version storage
-- [ ] Diff visualization UI
+- [x] Congress.gov API client (streaming JSON)
+- [x] Diff engine (Myers algorithm)
+- [x] Frontend layout with virtual scrolling
+- [ ] Database integration (PostgreSQL)
+- [ ] Wire real data flow (replace mocks)
+- [ ] Ingestor worker implementation
 - [ ] AI-powered change summaries
 - [ ] Premium analytics features
+
+See [ROADMAP.md](./ROADMAP.md) for detailed improvement plans.
 
 ## Contact
 
