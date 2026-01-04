@@ -1,15 +1,15 @@
 <header
-  class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md"
+  class="sticky top-4 z-50 w-full max-w-5xl mx-auto rounded-full border border-border/40 bg-background/80 backdrop-blur-md shadow-sm"
 >
   <div class="flex h-14 items-center justify-between px-6">
     <!-- Logo (Left) -->
-    <a routerLink="/bills" class="flex items-center gap-2 shrink-0">
+    <a routerLink="/" class="flex items-center gap-2 shrink-0">
       <img src="/logos/delta-gov.png" alt="DeltaGov" class="h-7 w-auto" />
-      <span class="sr-only">DeltaGov</span>
+      <span class="font-bold text-lg hidden sm:inline-block">DeltaGov</span>
     </a>
 
     <!-- Centered Navigation -->
-    <nav class="flex items-center gap-1">
+    <nav class="hidden md:flex items-center gap-1">
       @for (link of navLinks; track link.path) {
         <a
           [routerLink]="link.path"
@@ -21,23 +21,31 @@
       }
     </nav>
 
-    <!-- User Menu (Right) -->
-    <hlm-menubar class="border-none bg-transparent shrink-0">
-      <button
-        [hlmMenubarTrigger]="userMenu"
-        class="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent transition-colors"
-      >
-        <hlm-avatar size="sm" class="bg-primary">
-          <span hlmAvatarFallback class="bg-primary text-primary-foreground text-xs">U</span>
-        </hlm-avatar>
-        <ng-icon
-          hlm
-          name="lucideChevronDown"
-          class="text-muted-foreground"
-          size="sm"
-        />
-      </button>
-    </hlm-menubar>
+    <!-- Right Side: User Menu & CTA -->
+    <div class="flex items-center gap-4">
+       <!-- Primary CTA -->
+       <a routerLink="/lex" hlmBtn size="sm" class="hidden sm:inline-flex rounded-full">
+        Get Started
+      </a>
+
+      <!-- User Menu -->
+      <hlm-menubar class="border-none bg-transparent shrink-0">
+        <button
+          [hlmMenubarTrigger]="userMenu"
+          class="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent transition-colors"
+        >
+          <hlm-avatar size="sm" class="bg-primary">
+            <span hlmAvatarFallback class="bg-primary text-primary-foreground text-xs">U</span>
+          </hlm-avatar>
+          <ng-icon
+            hlm
+            name="lucideChevronDown"
+            class="text-muted-foreground"
+            size="sm"
+          />
+        </button>
+      </hlm-menubar>
+    </div>
 
     <ng-template #userMenu>
       <hlm-dropdown-menu class="w-48">
