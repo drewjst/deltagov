@@ -96,6 +96,30 @@ func RegisterRoutes(api huma.API) {
 		resp.Body.Total = len(bills)
 		return resp, nil
 	})
+
+	// Mock H.R. 1 - The One Big Beautiful Bill (for demo/testing)
+	huma.Register(api, huma.Operation{
+		OperationID: "get-hr1-mock",
+		Method:      http.MethodGet,
+		Path:        "/api/v1/bills/hr1",
+		Summary:     "Get H.R. 1 (Mock Data)",
+		Description: "Returns mock H.R. 1 data for demo/testing purposes",
+		Tags:        []string{"Bills"},
+	}, func(ctx context.Context, input *struct{}) (*GetBillOutput, error) {
+		return &GetBillOutput{Body: GetMockHR1()}, nil
+	})
+
+	// Mock diff computation (for demo/testing)
+	huma.Register(api, huma.Operation{
+		OperationID: "compute-diff-mock",
+		Method:      http.MethodGet,
+		Path:        "/api/v1/bills/{billId}/diff/{fromVersion}/{toVersion}",
+		Summary:     "Compute diff (Mock Data)",
+		Description: "Returns mock diff data for demo/testing purposes",
+		Tags:        []string{"Diff"},
+	}, func(ctx context.Context, input *ComputeDiffInput) (*ComputeDiffOutput, error) {
+		return &ComputeDiffOutput{Body: GetMockDiff()}, nil
+	})
 }
 
 // RegisterRoutesWithService sets up all API routes with a real BillService

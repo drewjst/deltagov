@@ -1,3 +1,141 @@
-cdk-virtual-scroll-viewport {
+// Diff Viewer Styles - Minimal, Professional, Performance-Focused
+
+// Virtual scroll container
+.diff-viewport {
   height: 100%;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+
+  &.unified {
+    padding: 0 1rem;
+  }
+}
+
+// Individual diff row container
+.diff-row {
+  height: 28px;
+  display: flex;
+  align-items: stretch;
+}
+
+// Diff line - base styles
+.diff-line {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0 0.75rem;
+  transition: background-color 0.1s ease;
+
+  &:hover {
+    filter: brightness(1.1);
+  }
+}
+
+// Line number
+.diff-line-num {
+  flex-shrink: 0;
+  width: 3rem;
+  padding-right: 1rem;
+  text-align: right;
+  color: hsl(var(--muted-foreground) / 0.5);
+  user-select: none;
+  font-size: 12px;
+}
+
+// Line prefix (+/-)
+.diff-line-prefix {
+  flex-shrink: 0;
+  width: 1.25rem;
+  text-align: center;
+  font-weight: 600;
+  user-select: none;
+}
+
+// Line text content
+.diff-line-text {
+  flex: 1;
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Deletion styling (red)
+.diff-deletion {
+  background-color: hsl(0 84% 60% / 0.1);
+  border-left: 3px solid hsl(0 84% 60% / 0.6);
+
+  .diff-line-num {
+    color: hsl(0 84% 60% / 0.6);
+  }
+
+  .diff-line-text {
+    color: hsl(0 84% 70%);
+  }
+
+  .diff-line-prefix {
+    color: hsl(0 84% 60%);
+  }
+}
+
+// Insertion styling (green)
+.diff-insertion {
+  background-color: hsl(142 76% 36% / 0.1);
+  border-left: 3px solid hsl(142 76% 46% / 0.6);
+
+  .diff-line-num {
+    color: hsl(142 76% 46% / 0.6);
+  }
+
+  .diff-line-text {
+    color: hsl(142 76% 56%);
+  }
+
+  .diff-line-prefix {
+    color: hsl(142 76% 46%);
+  }
+}
+
+// Unchanged styling
+.diff-unchanged {
+  background-color: transparent;
+  border-left: 3px solid transparent;
+
+  .diff-line-text {
+    color: hsl(var(--muted-foreground));
+  }
+
+  &:hover {
+    background-color: hsl(var(--muted) / 0.3);
+  }
+}
+
+// Empty line (for side-by-side alignment)
+.diff-empty {
+  background-color: hsl(var(--muted) / 0.15);
+  border-left: 3px solid transparent;
+
+  .diff-line-num,
+  .diff-line-text {
+    visibility: hidden;
+  }
+}
+
+// Scrollbar styling
+.diff-viewport::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.diff-viewport::-webkit-scrollbar-track {
+  background: hsl(var(--muted) / 0.3);
+}
+
+.diff-viewport::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+
+  &:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
 }

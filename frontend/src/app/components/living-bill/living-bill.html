@@ -1,4 +1,4 @@
-<div class="h-full flex flex-col">
+<div class="h-full flex flex-col bg-background">
   <!-- Loading State -->
   @if (store.isLoadingBill()) {
     <div class="flex-1 flex items-center justify-center">
@@ -9,119 +9,209 @@
     </div>
   } @else if (store.error()) {
     <div class="flex-1 flex items-center justify-center">
-      <div class="flex flex-col items-center gap-4 text-red-400">
+      <div class="flex flex-col items-center gap-4 text-destructive">
         <span>Error: {{ store.error() }}</span>
-        <button class="px-4 py-2 bg-primary text-primary-foreground rounded" (click)="store.loadHR1()">
+        <button class="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm" (click)="store.loadHR1()">
           Retry
         </button>
       </div>
     </div>
   } @else {
-  <!-- Bill Header -->
-  <div class="p-4 border-b border-border">
-    <div class="flex items-center gap-3 mb-2">
-      <lucide-icon [img]="FileTextIcon" class="h-5 w-5 text-primary" />
-      @if (store.bill(); as bill) {
-        <h3 hlmH3>H.R. {{ bill.billNumber }} - {{ bill.title }}</h3>
-      } @else {
-        <h3 hlmH3>Loading...</h3>
-      }
-    </div>
-    <div class="flex items-center gap-4">
-      <div class="flex items-center gap-1">
-        <lucide-icon [img]="UserIcon" class="h-4 w-4 text-muted-foreground" />
-        <span hlmMuted>{{ store.bill()?.sponsor || 'Loading...' }}</span>
-      </div>
-      <div class="flex items-center gap-1">
-        <lucide-icon [img]="CalendarIcon" class="h-4 w-4 text-muted-foreground" />
-        <span hlmMuted>Updated {{ store.bill()?.updateDate || 'Loading...' }}</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Version Selector -->
-  <div class="p-4 border-b border-border bg-secondary/50">
-    <div class="flex items-center gap-4">
-      <div class="flex items-center gap-2">
-        <lucide-icon [img]="GitCompareIcon" class="h-4 w-4 text-muted-foreground" />
-        <span hlmMuted>Comparing:</span>
-      </div>
-
-      <!-- From Version Select -->
-      <brn-select
-        [ngModel]="store.selectedFromVersion()"
-        (ngModelChange)="onFromVersionChange($event)"
-        placeholder="Select version"
-      >
-        <hlm-select-trigger class="w-44">
-          <hlm-select-value />
-        </hlm-select-trigger>
-        <hlm-select-content>
-          @for (version of store.fromVersionOptions(); track version.id) {
-            <hlm-option [value]="version.id">{{ version.label }}</hlm-option>
-          }
-        </hlm-select-content>
-      </brn-select>
-
-      <span class="text-muted-foreground">→</span>
-
-      <!-- To Version Select -->
-      <brn-select
-        [ngModel]="store.selectedToVersion()"
-        (ngModelChange)="onToVersionChange($event)"
-        placeholder="Select version"
-      >
-        <hlm-select-trigger class="w-44">
-          <hlm-select-value />
-        </hlm-select-trigger>
-        <hlm-select-content>
-          @for (version of store.toVersionOptions(); track version.id) {
-            <hlm-option [value]="version.id">{{ version.label }}</hlm-option>
-          }
-        </hlm-select-content>
-      </brn-select>
-    </div>
-  </div>
-
-  <!-- Diff Content with Virtual Scrolling -->
-  <cdk-virtual-scroll-viewport
-    itemSize="30"
-    class="flex-1 font-mono text-sm p-4"
-  >
-    <div *cdkVirtualFor="let line of store.diffLines(); trackBy: trackByLine" class="mb-0.5">
-      @switch (line.type) {
-        @case ('deletion') {
-          <div class="px-3 py-1 rounded bg-red-500/20 text-red-400 line-through truncate">
-            <span class="select-none mr-4 text-red-400/50">{{ line.lineNumber }}</span>
-            - {{ line.text }}
-          </div>
+    <!-- Bill Header -->
+    <div class="px-6 py-4 border-b border-border">
+      <div class="flex items-center gap-3 mb-2">
+        <lucide-icon [img]="FileTextIcon" class="h-5 w-5 text-primary" />
+        @if (store.bill(); as bill) {
+          <h3 hlmH3 class="text-lg font-semibold">H.R. {{ bill.billNumber }} - {{ bill.title }}</h3>
+        } @else {
+          <h3 hlmH3>Loading...</h3>
         }
-        @case ('insertion') {
-          <div class="px-3 py-1 rounded bg-green-500/20 text-green-400 truncate">
-            <span class="select-none mr-4 text-green-400/50">{{ line.lineNumber }}</span>
-            + {{ line.text }}
-          </div>
-        }
-        @default {
-          <div class="px-3 py-1 rounded bg-muted/30 text-muted-foreground truncate">
-            <span class="select-none mr-4 text-muted-foreground/50">{{ line.lineNumber }}</span>
-            {{ line.text }}
-          </div>
-        }
-      }
+      </div>
+      <div class="flex items-center gap-6 text-sm">
+        <div class="flex items-center gap-2">
+          <lucide-icon [img]="UserIcon" class="h-4 w-4 text-muted-foreground" />
+          <span class="text-muted-foreground">{{ store.bill()?.sponsor || 'Loading...' }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <lucide-icon [img]="CalendarIcon" class="h-4 w-4 text-muted-foreground" />
+          <span class="text-muted-foreground">Updated {{ store.bill()?.updateDate || 'Loading...' }}</span>
+        </div>
+      </div>
     </div>
-  </cdk-virtual-scroll-viewport>
 
-  <!-- Diff Stats Footer -->
-  <div class="p-3 border-t border-border bg-secondary/50 flex items-center gap-4">
+    <!-- Version Selector & View Toggle -->
+    <div class="px-6 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+          <lucide-icon [img]="GitCompareIcon" class="h-4 w-4 text-muted-foreground" />
+          <span class="text-sm text-muted-foreground">Comparing:</span>
+        </div>
+
+        <!-- From Version Select -->
+        <brn-select
+          [ngModel]="store.selectedFromVersion()"
+          (ngModelChange)="onFromVersionChange($event)"
+          placeholder="Select version"
+        >
+          <hlm-select-trigger class="w-40 h-8 text-sm">
+            <hlm-select-value />
+          </hlm-select-trigger>
+          <hlm-select-content>
+            @for (version of store.fromVersionOptions(); track version.id) {
+              <hlm-option [value]="version.id">{{ version.label }}</hlm-option>
+            }
+          </hlm-select-content>
+        </brn-select>
+
+        <span class="text-muted-foreground">→</span>
+
+        <!-- To Version Select -->
+        <brn-select
+          [ngModel]="store.selectedToVersion()"
+          (ngModelChange)="onToVersionChange($event)"
+          placeholder="Select version"
+        >
+          <hlm-select-trigger class="w-40 h-8 text-sm">
+            <hlm-select-value />
+          </hlm-select-trigger>
+          <hlm-select-content>
+            @for (version of store.toVersionOptions(); track version.id) {
+              <hlm-option [value]="version.id">{{ version.label }}</hlm-option>
+            }
+          </hlm-select-content>
+        </brn-select>
+      </div>
+
+      <!-- View Mode Toggle -->
+      <div class="flex items-center gap-1 bg-muted rounded-md p-1">
+        <button
+          (click)="viewMode.set('split')"
+          [class]="viewMode() === 'split' ? 'bg-background shadow-sm' : 'hover:bg-background/50'"
+          class="px-3 py-1.5 rounded text-sm flex items-center gap-2 transition-all"
+        >
+          <lucide-icon [img]="SplitIcon" class="h-4 w-4" />
+          <span>Split</span>
+        </button>
+        <button
+          (click)="viewMode.set('unified')"
+          [class]="viewMode() === 'unified' ? 'bg-background shadow-sm' : 'hover:bg-background/50'"
+          class="px-3 py-1.5 rounded text-sm flex items-center gap-2 transition-all"
+        >
+          <lucide-icon [img]="UnifiedIcon" class="h-4 w-4" />
+          <span>Unified</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Diff Content -->
     @if (store.isLoadingDiff()) {
-      <lucide-icon [img]="LoaderIcon" class="h-4 w-4 text-primary animate-spin" />
-      <span hlmMuted>Computing diff...</span>
+      <div class="flex-1 flex items-center justify-center">
+        <div class="flex items-center gap-3">
+          <lucide-icon [img]="LoaderIcon" class="h-5 w-5 text-primary animate-spin" />
+          <span class="text-muted-foreground">Computing diff...</span>
+        </div>
+      </div>
+    } @else if (viewMode() === 'split') {
+      <!-- Side-by-Side View -->
+      <div class="flex-1 flex overflow-hidden">
+        <!-- Left Panel Header -->
+        <div class="flex-1 flex flex-col border-r border-border">
+          <div class="px-4 py-2 bg-red-500/5 border-b border-border text-sm font-medium text-red-400 flex items-center justify-between">
+            <span>{{ store.selectedFromVersionLabel() || 'Original' }}</span>
+            <span class="text-xs text-red-400/70">-{{ store.diffStats().deletions }}</span>
+          </div>
+          <cdk-virtual-scroll-viewport itemSize="28" class="flex-1 diff-viewport">
+            <div
+              *cdkVirtualFor="let row of store.sideBySideRows(); trackBy: trackByRow"
+              class="diff-row"
+            >
+              @if (row.left) {
+                <div
+                  class="diff-line"
+                  [class.diff-deletion]="row.left.type === 'deletion'"
+                  [class.diff-unchanged]="row.left.type === 'unchanged'"
+                >
+                  <span class="diff-line-num">{{ row.left.lineNumber }}</span>
+                  <span class="diff-line-text">{{ row.left.text }}</span>
+                </div>
+              } @else {
+                <div class="diff-line diff-empty">
+                  <span class="diff-line-num"></span>
+                  <span class="diff-line-text"></span>
+                </div>
+              }
+            </div>
+          </cdk-virtual-scroll-viewport>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="flex-1 flex flex-col">
+          <div class="px-4 py-2 bg-green-500/5 border-b border-border text-sm font-medium text-green-400 flex items-center justify-between">
+            <span>{{ store.selectedToVersionLabel() || 'Modified' }}</span>
+            <span class="text-xs text-green-400/70">+{{ store.diffStats().additions }}</span>
+          </div>
+          <cdk-virtual-scroll-viewport itemSize="28" class="flex-1 diff-viewport">
+            <div
+              *cdkVirtualFor="let row of store.sideBySideRows(); trackBy: trackByRow"
+              class="diff-row"
+            >
+              @if (row.right) {
+                <div
+                  class="diff-line"
+                  [class.diff-insertion]="row.right.type === 'insertion'"
+                  [class.diff-unchanged]="row.right.type === 'unchanged'"
+                >
+                  <span class="diff-line-num">{{ row.right.lineNumber }}</span>
+                  <span class="diff-line-text">{{ row.right.text }}</span>
+                </div>
+              } @else {
+                <div class="diff-line diff-empty">
+                  <span class="diff-line-num"></span>
+                  <span class="diff-line-text"></span>
+                </div>
+              }
+            </div>
+          </cdk-virtual-scroll-viewport>
+        </div>
+      </div>
     } @else {
-      <span hlmSmall class="text-green-400">+{{ store.diffStats().additions }} additions</span>
-      <span hlmSmall class="text-red-400">-{{ store.diffStats().deletions }} deletions</span>
-      <span hlmMuted>{{ store.diffStats().total }} lines total</span>
+      <!-- Unified View -->
+      <cdk-virtual-scroll-viewport itemSize="28" class="flex-1 diff-viewport unified">
+        <div
+          *cdkVirtualFor="let line of store.diffLines(); trackBy: trackByLine"
+          class="diff-row"
+        >
+          <div
+            class="diff-line"
+            [class.diff-deletion]="line.type === 'deletion'"
+            [class.diff-insertion]="line.type === 'insertion'"
+            [class.diff-unchanged]="line.type === 'unchanged'"
+          >
+            <span class="diff-line-num">{{ line.lineNumber }}</span>
+            <span class="diff-line-prefix">
+              @switch (line.type) {
+                @case ('deletion') { - }
+                @case ('insertion') { + }
+                @default { &nbsp; }
+              }
+            </span>
+            <span class="diff-line-text">{{ line.text }}</span>
+          </div>
+        </div>
+      </cdk-virtual-scroll-viewport>
     }
-  </div>
-  } <!-- End of @else for main content -->
+
+    <!-- Diff Stats Footer -->
+    <div class="px-6 py-3 border-t border-border bg-muted/30 flex items-center gap-6">
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-3 h-3 rounded-sm bg-green-500/20 border border-green-500/40"></span>
+        <span class="text-sm text-green-400">+{{ store.diffStats().additions }} additions</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-3 h-3 rounded-sm bg-red-500/20 border border-red-500/40"></span>
+        <span class="text-sm text-red-400">-{{ store.diffStats().deletions }} deletions</span>
+      </div>
+      <span class="text-sm text-muted-foreground">{{ store.diffStats().total }} lines</span>
+    </div>
+  }
 </div>

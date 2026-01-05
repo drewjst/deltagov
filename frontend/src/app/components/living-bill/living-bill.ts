@@ -1,11 +1,13 @@
-import { ChangeDetectionStrategy, Component, effect, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { LucideAngularModule, GitCompare, FileText, Calendar, User, Loader2 } from 'lucide-angular';
+import { LucideAngularModule, GitCompare, FileText, Calendar, User, Loader2, Columns2, List } from 'lucide-angular';
 import { BrnSelectImports } from '@spartan-ng/brain/select';
 import { HlmSelectImports } from '@spartan-ng/helm/select';
 import { HlmTypographyImports } from '@spartan-ng/helm/typography';
-import { DiffLine, LivingBillStore } from './living-bill.store';
+import { DiffLine, SideBySideRow, LivingBillStore } from './living-bill.store';
+
+type ViewMode = 'split' | 'unified';
 
 @Component({
   selector: 'app-living-bill',
@@ -30,6 +32,11 @@ export class LivingBill implements OnInit {
   protected readonly CalendarIcon = Calendar;
   protected readonly UserIcon = User;
   protected readonly LoaderIcon = Loader2;
+  protected readonly SplitIcon = Columns2;
+  protected readonly UnifiedIcon = List;
+
+  // View mode: split (side-by-side) or unified
+  protected readonly viewMode = signal<ViewMode>('split');
 
   constructor() {
     // Effect to load diff when versions change
@@ -63,5 +70,13 @@ export class LivingBill implements OnInit {
 
   protected trackByLine(_: number, item: DiffLine): string {
     return `${item.lineNumber}-${item.type}-${item.text.substring(0, 20)}`;
+  }
+
+  protected trackByRow(_: number, item: SideBySideRow): number {
+    return item.id;
+  }
+
+  protected toggleViewMode(): void {
+    this.viewMode.update(mode => mode === 'split' ? 'unified' : 'split');
   }
 }

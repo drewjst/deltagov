@@ -36,6 +36,13 @@ export interface DiffLine {
   text: string;
 }
 
+// Side-by-side diff row for performance
+export interface SideBySideRow {
+  id: number;
+  left: { lineNumber: number; text: string; type: 'deletion' | 'unchanged' | 'empty' } | null;
+  right: { lineNumber: number; text: string; type: 'insertion' | 'unchanged' | 'empty' } | null;
+}
+
 export interface Delta {
   fromVersion: string;
   toVersion: string;
@@ -125,6 +132,71 @@ export const LivingBillStore = signalStore(
         deletions: 0,
         total: 0,
       };
+    }),
+    // Side-by-side rows for split view - optimized for virtual scrolling
+    sideBySideRows: computed((): SideBySideRow[] => {
+      const delta = store.delta();
+      if (!delta) return [];
+
+      // Get lines from delta (same logic as diffLines)
+      let lines: DiffLine[] = [];
+      if (delta.lines && delta.lines.length > 0) {
+        lines = delta.lines;
+      } else if (delta.segments && delta.segments.length > 0) {
+        lines = delta.segments.map((seg, idx) => ({
+          lineNumber: idx + 1,
+          type: seg.type,
+          text: seg.text,
+        }));
+      }
+      if (!lines.length) return [];
+
+      const rows: SideBySideRow[] = [];
+      let leftLineNum = 1;
+      let rightLineNum = 1;
+      let i = 0;
+
+      while (i < lines.length) {
+        const line = lines[i];
+
+        if (line.type === 'unchanged') {
+          rows.push({
+            id: rows.length,
+            left: { lineNumber: leftLineNum++, text: line.text, type: 'unchanged' },
+            right: { lineNumber: rightLineNum++, text: line.text, type: 'unchanged' },
+          });
+          i++;
+        } else if (line.type === 'deletion') {
+          // Look ahead for paired insertion
+          const nextLine = lines[i + 1];
+          if (nextLine?.type === 'insertion') {
+            rows.push({
+              id: rows.length,
+              left: { lineNumber: leftLineNum++, text: line.text, type: 'deletion' },
+              right: { lineNumber: rightLineNum++, text: nextLine.text, type: 'insertion' },
+            });
+            i += 2;
+          } else {
+            rows.push({
+              id: rows.length,
+              left: { lineNumber: leftLineNum++, text: line.text, type: 'deletion' },
+              right: null,
+            });
+            i++;
+          }
+        } else if (line.type === 'insertion') {
+          rows.push({
+            id: rows.length,
+            left: null,
+            right: { lineNumber: rightLineNum++, text: line.text, type: 'insertion' },
+          });
+          i++;
+        } else {
+          i++;
+        }
+      }
+
+      return rows;
     }),
   })),
   withMethods((store, billService = inject(BillService)) => ({
