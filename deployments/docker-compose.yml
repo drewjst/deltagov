@@ -41,7 +41,7 @@ services:
   api:
     build:
       context: ..
-      dockerfile: deployments/docker/backend.Dockerfile
+      dockerfile: deployments/docker/api.Dockerfile
     container_name: deltagov-api
     restart: unless-stopped
     ports:
@@ -69,7 +69,7 @@ services:
   ingestor:
     build:
       context: ..
-      dockerfile: deployments/docker/backend.Dockerfile
+      dockerfile: deployments/docker/api.Dockerfile
     container_name: deltagov-ingestor
     entrypoint: ["/app/ingestor"]
     environment:

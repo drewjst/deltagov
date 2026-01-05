@@ -1,0 +1,75 @@
+# =============================================================================
+# DeltaGov Cloud Build Configuration
+# Builds and deploys to Google Cloud Run
+# =============================================================================
+#
+# Usage:
+#   Build API:      gcloud builds submit --config=cloudbuild.yaml --substitutions=_SERVICE=api
+#   Build Frontend: gcloud builds submit --config=cloudbuild.yaml --substitutions=_SERVICE=frontend
+#
+# Required substitutions:
+#   _SERVICE: Which service to build (api or frontend)
+#
+# Optional substitutions:
+#   _REGION: GCP region (default: us-central1)
+#   _PROJECT_ID: GCP project ID (auto-detected from gcloud)
+# =============================================================================
+
+substitutions:
+  _SERVICE: api
+  _REGION: us-central1
+
+steps:
+  # Step 1: Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/deltagov-${_SERVICE}:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/deltagov-${_SERVICE}:latest'
+      - '-f'
+      - 'deployments/docker/${_SERVICE}.Dockerfile'
+      - '.'
+    id: 'build'
+
+  # Step 2: Push to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/deltagov-${_SERVICE}:$COMMIT_SHA'
+    id: 'push-sha'
+    waitFor: ['build']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/deltagov-${_SERVICE}:latest'
+    id: 'push-latest'
+    waitFor: ['build']
+
+  # Step 3: Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'deltagov-${_SERVICE}'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/deltagov-${_SERVICE}:$COMMIT_SHA'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '8080'
+    id: 'deploy'
+    waitFor: ['push-sha']
+
+images:
+  - 'gcr.io/$PROJECT_ID/deltagov-${_SERVICE}:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/deltagov-${_SERVICE}:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
