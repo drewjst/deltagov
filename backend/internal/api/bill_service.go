@@ -208,7 +208,9 @@ func (s *BillService) GetBillWithVersions(ctx context.Context, billID uint) (*Bi
 	}
 
 	var versions []models.Version
-	if err := s.db.Where("bill_id = ?", billID).Order("fetched_at ASC").Find(&versions).Error; err != nil {
+	// Select specific fields to avoid fetching large text_content
+	if err := s.db.Select("id", "bill_id", "version_code", "content_hash", "fetched_at").
+		Where("bill_id = ?", billID).Order("fetched_at ASC").Find(&versions).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch versions: %w", err)
 	}
 
