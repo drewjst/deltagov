@@ -1,0 +1,126 @@
+<div class="flex flex-col min-h-screen bg-zinc-50">
+  <!-- Hero Section -->
+  <section class="relative pt-32 pb-20 overflow-hidden">
+    <div class="container relative z-10 px-4 mx-auto text-center">
+      <!-- Headline -->
+      <h1 class="font-serif text-5xl font-bold tracking-tight text-foreground sm:text-7xl mb-6">
+        Git for Government
+      </h1>
+      <p class="max-w-2xl mx-auto text-xl text-muted-foreground mb-10 font-sans">
+        Track, version, and visualize changes in U.S. legislative bills. <br class="hidden sm:inline">
+        Transparency through version control.
+      </p>
+
+      <!-- CTA -->
+      <div class="flex items-center justify-center gap-4 mb-20">
+        <a routerLink="/lex" hlmBtn variant="default" size="lg" class="rounded-full px-8 text-base h-12">
+          See the diffs
+        </a>
+      </div>
+
+      <!-- Diff Card Visualization -->
+      <div class="max-w-5xl mx-auto bg-card rounded-xl shadow-xl border border-border overflow-hidden text-left font-mono text-sm">
+        <!-- Card Header -->
+        <div class="flex items-center gap-2 px-4 py-3 bg-muted/50 border-b border-border">
+          <div class="flex gap-1.5">
+            <div class="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
+            <div class="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
+            <div class="w-3 h-3 rounded-full bg-[#27c93f]"></div>
+          </div>
+          <div class="ml-4 text-xs text-muted-foreground font-sans">H.R. 5376 - Inflation Reduction Act</div>
+        </div>
+
+        <!-- Diff Content -->
+        <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
+          <!-- Left: Old Version -->
+          <div class="p-6 bg-background">
+            <div class="text-xs text-muted-foreground mb-4 font-sans">v1.0.0 (Introduced)</div>
+            <div class="space-y-4">
+              <div>
+                <div class="text-muted-foreground/50 mb-1">101. SHORT TITLE.</div>
+                <div class="leading-relaxed">
+                  This Act may be cited as the <span class="bg-destructive/20 text-destructive decoration-destructive line-through">"Build Back Better Act"</span>.
+                </div>
+              </div>
+              <div>
+                <div class="text-muted-foreground/50 mb-1">SEC. 102. APPROPRIATIONS.</div>
+                <div class="leading-relaxed">
+                  There is appropriated <span class="bg-destructive/20 text-destructive decoration-destructive line-through">$3,500,000,000,000</span> for fiscal year 2022.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: New Version -->
+          <div class="p-6 bg-background">
+            <div class="text-xs text-muted-foreground mb-4 font-sans">v2.1.0 (Enrolled)</div>
+            <div class="space-y-4">
+              <div>
+                <div class="text-muted-foreground/50 mb-1">101. SHORT TITLE.</div>
+                <div class="leading-relaxed">
+                  This Act may be cited as the <span class="bg-green-500/20 text-green-700 dark:text-green-400">"Inflation Reduction Act of 2022"</span>.
+                </div>
+              </div>
+              <div>
+                <div class="text-muted-foreground/50 mb-1">SEC. 102. APPROPRIATIONS.</div>
+                <div class="leading-relaxed">
+                  There is appropriated <span class="bg-green-500/20 text-green-700 dark:text-green-400">$739,000,000,000</span> for fiscal year 2022.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Background Decoration -->
+    <div class="absolute inset-0 -z-10 h-full w-full bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
+  </section>
+
+  <!-- Lex Showcase -->
+  <section class="py-24 bg-muted/30">
+    <div class="container px-4 mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="font-serif text-3xl font-bold mb-4">The Source Code of Society</h2>
+        <p class="text-muted-foreground max-w-2xl mx-auto">
+          Law is complex. We treat it like code—parseable, versioned, and transparent.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <!-- Feature 1 -->
+        <div class="p-6 rounded-2xl bg-card border border-border shadow-sm">
+          <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
+            <ng-icon hlm name="lucideGitCommit" size="lg" />
+          </div>
+          <h3 class="font-bold mb-2">Word-Level Versioning</h3>
+          <p class="text-muted-foreground text-sm">
+            See exactly what changed, word for word. No more guessing what "Strike line 4" means in context.
+          </p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="p-6 rounded-2xl bg-card border border-border shadow-sm">
+          <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
+            <ng-icon hlm name="lucideGitBranch" size="lg" />
+          </div>
+          <h3 class="font-bold mb-2">Legislative History</h3>
+          <p class="text-muted-foreground text-sm">
+            Trace the evolution of a bill from introduction to enrollment. Visualize the path of influence.
+          </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="p-6 rounded-2xl bg-card border border-border shadow-sm">
+          <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
+            <ng-icon hlm name="lucideFileText" size="lg" />
+          </div>
+          <h3 class="font-bold mb-2">Insight Engine</h3>
+          <p class="text-muted-foreground text-sm">
+            AI-powered summaries and spending impact analysis. Understand the "why" and "how much" instantly.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

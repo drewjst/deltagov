@@ -8,6 +8,7 @@ import {
   lucideUserCircle,
 } from '@ng-icons/lucide';
 import { HlmAvatarImports } from '@spartan-ng/helm/avatar';
+import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu';
 import { HlmIcon } from '@spartan-ng/helm/icon';
 import { HlmMenubarImports } from '@spartan-ng/helm/menubar';
@@ -20,6 +21,7 @@ import { HlmMenubarImports } from '@spartan-ng/helm/menubar';
     RouterLinkActive,
     NgIcon,
     HlmAvatarImports,
+    HlmButton,
     HlmDropdownMenuImports,
     HlmIcon,
     HlmMenubarImports,
@@ -38,7 +40,7 @@ import { HlmMenubarImports } from '@spartan-ng/helm/menubar';
 })
 export class Header {
   protected readonly navLinks = [
-    { path: '/bills', label: 'Bills' },
+    { path: '/lex', label: 'Lex' },
     { path: '/history', label: 'History' },
     { path: '/influence', label: 'Influence' },
     { path: '/money-trail', label: 'Money Trail' },
