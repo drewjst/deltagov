@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { AppConfigService } from '../config/app-config.service';
 
 // API Response Types
 export interface BillVersion {
@@ -55,7 +56,11 @@ export interface BillsListResponse {
 })
 export class BillService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api/v1';
+  private readonly configService = inject(AppConfigService);
+
+  private get apiUrl(): string {
+    return this.configService.apiUrl;
+  }
 
   /**
    * Get H.R. 1 - The One Big Beautiful Bill
