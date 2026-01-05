@@ -1,18 +1,40 @@
 <div class="h-full flex flex-col">
+  <!-- Loading State -->
+  @if (store.isLoadingBill()) {
+    <div class="flex-1 flex items-center justify-center">
+      <div class="flex flex-col items-center gap-4">
+        <lucide-icon [img]="LoaderIcon" class="h-8 w-8 text-primary animate-spin" />
+        <span hlmMuted>Loading H.R. 1 - One Big Beautiful Bill...</span>
+      </div>
+    </div>
+  } @else if (store.error()) {
+    <div class="flex-1 flex items-center justify-center">
+      <div class="flex flex-col items-center gap-4 text-red-400">
+        <span>Error: {{ store.error() }}</span>
+        <button class="px-4 py-2 bg-primary text-primary-foreground rounded" (click)="store.loadHR1()">
+          Retry
+        </button>
+      </div>
+    </div>
+  } @else {
   <!-- Bill Header -->
   <div class="p-4 border-b border-border">
     <div class="flex items-center gap-3 mb-2">
       <lucide-icon [img]="FileTextIcon" class="h-5 w-5 text-primary" />
-      <h3 hlmH3>H.R. 1234 - Federal Budget Act of 2025</h3>
+      @if (store.bill(); as bill) {
+        <h3 hlmH3>H.R. {{ bill.billNumber }} - {{ bill.title }}</h3>
+      } @else {
+        <h3 hlmH3>Loading...</h3>
+      }
     </div>
     <div class="flex items-center gap-4">
       <div class="flex items-center gap-1">
         <lucide-icon [img]="UserIcon" class="h-4 w-4 text-muted-foreground" />
-        <span hlmMuted>Rep. Jane Smith (D-CA)</span>
+        <span hlmMuted>{{ store.bill()?.sponsor || 'Loading...' }}</span>
       </div>
       <div class="flex items-center gap-1">
         <lucide-icon [img]="CalendarIcon" class="h-4 w-4 text-muted-foreground" />
-        <span hlmMuted>Updated Dec 15, 2025</span>
+        <span hlmMuted>Updated {{ store.bill()?.updateDate || 'Loading...' }}</span>
       </div>
     </div>
   </div>
@@ -92,8 +114,14 @@
 
   <!-- Diff Stats Footer -->
   <div class="p-3 border-t border-border bg-secondary/50 flex items-center gap-4">
-    <span hlmSmall class="text-green-400">+{{ store.diffStats().additions }} additions</span>
-    <span hlmSmall class="text-red-400">-{{ store.diffStats().deletions }} deletions</span>
-    <span hlmMuted>{{ store.diffStats().total }} lines total</span>
+    @if (store.isLoadingDiff()) {
+      <lucide-icon [img]="LoaderIcon" class="h-4 w-4 text-primary animate-spin" />
+      <span hlmMuted>Computing diff...</span>
+    } @else {
+      <span hlmSmall class="text-green-400">+{{ store.diffStats().additions }} additions</span>
+      <span hlmSmall class="text-red-400">-{{ store.diffStats().deletions }} deletions</span>
+      <span hlmMuted>{{ store.diffStats().total }} lines total</span>
+    }
   </div>
+  } <!-- End of @else for main content -->
 </div>

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -332,6 +333,100 @@ type TextVersion struct {
 type TextFormat struct {
 	Type string `json:"type"`
 	URL  string `json:"url"`
+}
+
+// FetchTextContent downloads the actual text content from a given URL.
+// This is used to retrieve the bill text from URLs returned by GetBillText.
+// The URL can point to XML, HTML, or plain text formats.
+func (c *Client) FetchTextContent(ctx context.Context, url string) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", fmt.Errorf("congress: failed to create request: %w", err)
+	}
+
+	// Congress.gov URLs don't need API key, but we set accept header
+	req.Header.Set("Accept", "text/xml, text/html, text/plain")
+	req.Header.Set("User-Agent", "DeltaGov/1.0")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("congress: failed to fetch text content: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if err := c.checkResponse(resp); err != nil {
+		return "", err
+	}
+
+	// Read with size limit (10MB max for large bills)
+	const maxSize = 10 * 1024 * 1024
+	limitReader := &io.LimitedReader{R: resp.Body, N: maxSize}
+
+	// Use strings.Builder for efficient string building
+	var builder strings.Builder
+	builder.Grow(1024 * 1024) // Pre-allocate 1MB
+
+	_, err = io.Copy(&builder, limitReader)
+	if err != nil {
+		return "", fmt.Errorf("congress: failed to read text content: %w", err)
+	}
+
+	return builder.String(), nil
+}
+
+// GetBillTextWithContent fetches all text versions and downloads the content for each.
+// Returns text versions with their content populated.
+func (c *Client) GetBillTextWithContent(ctx context.Context, congress int, billType string, billNumber int) ([]TextVersionWithContent, error) {
+	// First, get the list of text versions
+	versions, err := c.GetBillText(ctx, congress, billType, billNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]TextVersionWithContent, 0, len(versions))
+
+	for _, v := range versions {
+		// Find the XML format (preferred) or fall back to HTML
+		var contentURL string
+		var formatType string
+		for _, f := range v.Formats {
+			if f.Type == "Formatted XML" {
+				contentURL = f.URL
+				formatType = "xml"
+				break
+			}
+			if f.Type == "Formatted Text" && contentURL == "" {
+				contentURL = f.URL
+				formatType = "html"
+			}
+		}
+
+		if contentURL == "" {
+			continue // Skip versions without text content
+		}
+
+		// Fetch the actual content
+		content, err := c.FetchTextContent(ctx, contentURL)
+		if err != nil {
+			// Log but continue with other versions
+			continue
+		}
+
+		result = append(result, TextVersionWithContent{
+			TextVersion: v,
+			Content:     content,
+			FormatType:  formatType,
+		})
+	}
+
+	return result, nil
+}
+
+// TextVersionWithContent extends TextVersion with the actual text content.
+type TextVersionWithContent struct {
+	TextVersion
+	Content    string `json:"content"`
+	FormatType string `json:"formatType"` // "xml" or "html"
 }
 
 // Appropriation/spending keywords for IsAppropriation check.

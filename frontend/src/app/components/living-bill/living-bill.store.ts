@@ -1,19 +1,28 @@
-import { computed } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { signalStore, withState, withComputed, withMethods, patchState } from '@ngrx/signals';
+import { rxMethod } from '@ngrx/signals/rxjs-interop';
+import { pipe, switchMap, tap, catchError, of, EMPTY } from 'rxjs';
+import { BillService, Bill as ApiBill, BillVersion as ApiVersion, DiffResponse } from '../../services/bill.service';
 
 // Types
 export interface BillVersion {
-  id: string;
+  id: number;
   label: string;
   date: string;
   contentHash: string;
+  versionCode: string;
 }
 
 export interface Bill {
-  id: string;
+  id: number;
   title: string;
   sponsor: string;
   status: string;
+  congress?: number;
+  billNumber?: number;
+  billType?: string;
+  originChamber?: string;
+  updateDate?: string;
 }
 
 export interface DiffSegment {
@@ -31,13 +40,16 @@ export interface Delta {
   fromVersion: string;
   toVersion: string;
   segments: DiffSegment[];
+  lines: DiffLine[];
+  insertions: number;
+  deletions: number;
 }
 
 export interface LivingBillState {
   bill: Bill | null;
   versions: BillVersion[];
-  selectedFromVersion: string;
-  selectedToVersion: string;
+  selectedFromVersion: number;
+  selectedToVersion: number;
   delta: Delta | null;
   isLoadingBill: boolean;
   isLoadingVersions: boolean;
@@ -48,8 +60,8 @@ export interface LivingBillState {
 const initialState: LivingBillState = {
   bill: null,
   versions: [],
-  selectedFromVersion: '',
-  selectedToVersion: '',
+  selectedFromVersion: 0,
+  selectedToVersion: 0,
   delta: null,
   isLoadingBill: false,
   isLoadingVersions: false,
@@ -77,56 +89,134 @@ export const LivingBillStore = signalStore(
     }),
     hasVersions: computed(() => store.versions().length > 0),
     canCompareDiff: computed(
-      () => store.selectedFromVersion() !== '' && store.selectedToVersion() !== '',
+      () => store.selectedFromVersion() !== 0 && store.selectedToVersion() !== 0,
     ),
     isLoading: computed(
       () => store.isLoadingBill() || store.isLoadingVersions() || store.isLoadingDiff(),
     ),
-    // Computed diff lines for virtual scrolling - will be derived from delta when available
+    // Computed diff lines for virtual scrolling
     diffLines: computed((): DiffLine[] => {
-      // Mock data until real diff engine is connected
-      const mockLines: DiffLine[] = [
-        { lineNumber: 1, type: 'unchanged', text: 'SECTION 1. SHORT TITLE.' },
-        { lineNumber: 2, type: 'unchanged', text: 'This Act may be cited as the "Federal Budget Act of 2025".' },
-        { lineNumber: 3, type: 'unchanged', text: '' },
-        { lineNumber: 4, type: 'unchanged', text: 'SECTION 2. APPROPRIATIONS.' },
-        { lineNumber: 5, type: 'deletion', text: '(a) There is appropriated $500,000,000 for infrastructure.' },
-        { lineNumber: 5, type: 'insertion', text: '(a) There is appropriated $750,000,000 for infrastructure.' },
-        { lineNumber: 6, type: 'unchanged', text: '' },
-        { lineNumber: 7, type: 'deletion', text: '(b) Funds shall be distributed over a period of 3 years.' },
-        { lineNumber: 7, type: 'insertion', text: '(b) Funds shall be distributed over a period of 5 years.' },
-        { lineNumber: 8, type: 'unchanged', text: '' },
-        { lineNumber: 9, type: 'insertion', text: '(c) Priority shall be given to rural communities.' },
-        { lineNumber: 10, type: 'unchanged', text: '' },
-        { lineNumber: 11, type: 'unchanged', text: 'SECTION 3. OVERSIGHT.' },
-        { lineNumber: 12, type: 'unchanged', text: 'The Government Accountability Office shall conduct annual audits.' },
-      ];
-      // Return mock data or parse delta.segments when available
-      return store.delta()?.segments
-        ? store.delta()!.segments.map((seg, idx) => ({
-            lineNumber: idx + 1,
-            type: seg.type,
-            text: seg.text,
-          }))
-        : mockLines;
+      const delta = store.delta();
+      if (delta?.lines && delta.lines.length > 0) {
+        return delta.lines;
+      }
+      // Fallback to segments if lines not available
+      if (delta?.segments && delta.segments.length > 0) {
+        return delta.segments.map((seg, idx) => ({
+          lineNumber: idx + 1,
+          type: seg.type,
+          text: seg.text,
+        }));
+      }
+      // Empty state
+      return [];
     }),
     diffStats: computed(() => {
-      const lines = store.delta()?.segments ?? [];
+      const delta = store.delta();
+      if (delta) {
+        return {
+          additions: delta.insertions,
+          deletions: delta.deletions,
+          total: delta.lines?.length || delta.segments?.length || 0,
+        };
+      }
       return {
-        additions: lines.filter(l => l.type === 'insertion').length || 3,
-        deletions: lines.filter(l => l.type === 'deletion').length || 2,
-        total: lines.length || 14,
+        additions: 0,
+        deletions: 0,
+        total: 0,
       };
     }),
   })),
-  withMethods((store) => ({
+  withMethods((store, billService = inject(BillService)) => ({
     // Version selection
-    selectFromVersion(versionId: string): void {
+    selectFromVersion(versionId: number): void {
       patchState(store, { selectedFromVersion: versionId });
     },
-    selectToVersion(versionId: string): void {
+    selectToVersion(versionId: number): void {
       patchState(store, { selectedToVersion: versionId });
     },
+
+    // Load H.R. 1 - The One Big Beautiful Bill
+    loadHR1: rxMethod<void>(
+      pipe(
+        tap(() => patchState(store, { isLoadingBill: true, error: null })),
+        switchMap(() =>
+          billService.getHR1().pipe(
+            tap((bill) => {
+              const versions: BillVersion[] = (bill.versions || []).map((v) => ({
+                id: v.id,
+                label: v.label,
+                date: v.date,
+                contentHash: v.contentHash,
+                versionCode: v.versionCode,
+              }));
+
+              const mappedBill: Bill = {
+                id: bill.id,
+                title: bill.title,
+                sponsor: bill.sponsor || 'Unknown',
+                status: bill.currentStatus || 'Unknown',
+                congress: bill.congress,
+                billNumber: bill.billNumber,
+                billType: bill.billType,
+                originChamber: bill.originChamber,
+                updateDate: bill.updateDate,
+              };
+
+              patchState(store, {
+                bill: mappedBill,
+                versions,
+                isLoadingBill: false,
+              });
+
+              // Auto-select first two versions if available
+              if (versions.length >= 2) {
+                patchState(store, {
+                  selectedFromVersion: versions[0].id,
+                  selectedToVersion: versions[versions.length - 1].id,
+                });
+              }
+            }),
+            catchError((error) => {
+              patchState(store, {
+                error: error.message || 'Failed to load H.R. 1',
+                isLoadingBill: false,
+              });
+              return EMPTY;
+            }),
+          ),
+        ),
+      ),
+    ),
+
+    // Load diff between selected versions
+    loadDiff: rxMethod<{ billId: number; fromVersionId: number; toVersionId: number }>(
+      pipe(
+        tap(() => patchState(store, { isLoadingDiff: true, error: null })),
+        switchMap(({ billId, fromVersionId, toVersionId }) =>
+          billService.computeDiff(billId, fromVersionId, toVersionId).pipe(
+            tap((diff) => {
+              const delta: Delta = {
+                fromVersion: diff.fromVersion,
+                toVersion: diff.toVersion,
+                segments: diff.segments,
+                lines: diff.lines,
+                insertions: diff.insertions,
+                deletions: diff.deletions,
+              };
+              patchState(store, { delta, isLoadingDiff: false });
+            }),
+            catchError((error) => {
+              patchState(store, {
+                error: error.message || 'Failed to compute diff',
+                isLoadingDiff: false,
+              });
+              return EMPTY;
+            }),
+          ),
+        ),
+      ),
+    ),
 
     // Loading state management (for use with service calls)
     setLoadingBill(isLoading: boolean): void {

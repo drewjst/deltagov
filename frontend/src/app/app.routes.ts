@@ -7,13 +7,13 @@ export const routes: Routes = [
       import('./pages/landing/landing').then((m) => m.LandingPage),
   },
   {
-    path: 'lex',
+    path: 'diffs',
     loadComponent: () =>
       import('./pages/bills/bills').then((m) => m.BillsPage),
   },
   {
     path: 'bills',
-    redirectTo: 'lex',
+    redirectTo: 'diffs',
     pathMatch: 'full',
   },
   {

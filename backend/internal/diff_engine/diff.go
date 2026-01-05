@@ -98,39 +98,122 @@ func Compute(textA, textB, versionA, versionB string) (*Delta, error) {
 
 // ComputeWordLevel performs word-level diffing for more granular changes
 func ComputeWordLevel(textA, textB string) (*Delta, error) {
-	// Split into words while preserving structure
-	wordsA := tokenize(textA)
-	wordsB := tokenize(textB)
+	// Split by lines for line-level diffing with word context
+	linesA := strings.Split(textA, "\n")
+	linesB := strings.Split(textB, "\n")
 
-	// Compute diff on word tokens
-	edits := myers.ComputeEdits(strings.Join(wordsA, "\n"), strings.Join(wordsB, "\n"))
+	// Compute diff on lines
+	edits := myers.ComputeEdits(textA, textB)
 
 	delta := &Delta{
 		Hunks: []Hunk{},
 	}
 
-	// Count changes
-	diffStr, err := udiff.ToUnified("a", "b", strings.Join(wordsA, "\n"), edits, 3)
+	// Generate unified diff
+	diffStr, err := udiff.ToUnified("a", "b", textA, edits, 3)
 	if err != nil {
 		return nil, err
 	}
+
+	// Parse the unified diff to extract changes
+	var currentHunk *Hunk
+	lineNumA := 1
+	lineNumB := 1
 
 	for _, line := range strings.Split(diffStr, "\n") {
 		if len(line) == 0 {
 			continue
 		}
+
+		// Skip header lines
+		if strings.HasPrefix(line, "---") || strings.HasPrefix(line, "+++") {
+			continue
+		}
+
+		// Parse hunk header
+		if strings.HasPrefix(line, "@@") {
+			if currentHunk != nil {
+				delta.Hunks = append(delta.Hunks, *currentHunk)
+			}
+			currentHunk = &Hunk{
+				StartA: lineNumA,
+				StartB: lineNumB,
+				Lines:  []Change{},
+			}
+			continue
+		}
+
+		if currentHunk == nil {
+			continue
+		}
+
 		switch line[0] {
 		case '+':
-			if !strings.HasPrefix(line, "+++") {
-				delta.Insertions++
+			content := ""
+			if len(line) > 1 {
+				content = line[1:]
 			}
+			currentHunk.Lines = append(currentHunk.Lines, Change{
+				Type:    ChangeInsert,
+				Content: content,
+				LineB:   lineNumB,
+			})
+			delta.Insertions++
+			lineNumB++
 		case '-':
-			if !strings.HasPrefix(line, "---") {
-				delta.Deletions++
+			content := ""
+			if len(line) > 1 {
+				content = line[1:]
 			}
+			currentHunk.Lines = append(currentHunk.Lines, Change{
+				Type:    ChangeDelete,
+				Content: content,
+				LineA:   lineNumA,
+			})
+			delta.Deletions++
+			lineNumA++
 		case ' ':
+			content := ""
+			if len(line) > 1 {
+				content = line[1:]
+			}
+			currentHunk.Lines = append(currentHunk.Lines, Change{
+				Type:    ChangeUnchanged,
+				Content: content,
+				LineA:   lineNumA,
+				LineB:   lineNumB,
+			})
+			delta.Unchanged++
+			lineNumA++
+			lineNumB++
+		}
+	}
+
+	// Add the last hunk
+	if currentHunk != nil && len(currentHunk.Lines) > 0 {
+		delta.Hunks = append(delta.Hunks, *currentHunk)
+	}
+
+	// If no changes detected, add all lines as unchanged
+	if len(delta.Hunks) == 0 {
+		hunk := Hunk{StartA: 1, StartB: 1, Lines: []Change{}}
+		maxLines := max(len(linesA), len(linesB))
+		for i := 0; i < maxLines; i++ {
+			content := ""
+			if i < len(linesA) {
+				content = linesA[i]
+			} else if i < len(linesB) {
+				content = linesB[i]
+			}
+			hunk.Lines = append(hunk.Lines, Change{
+				Type:    ChangeUnchanged,
+				Content: content,
+				LineA:   i + 1,
+				LineB:   i + 1,
+			})
 			delta.Unchanged++
 		}
+		delta.Hunks = append(delta.Hunks, hunk)
 	}
 
 	return delta, nil

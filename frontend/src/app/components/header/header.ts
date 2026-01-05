@@ -40,7 +40,7 @@ import { HlmMenubarImports } from '@spartan-ng/helm/menubar';
 })
 export class Header {
   protected readonly navLinks = [
-    { path: '/lex', label: 'Lex' },
+    { path: '/diffs', label: 'Diffs' },
     { path: '/history', label: 'History' },
     { path: '/influence', label: 'Influence' },
     { path: '/money-trail', label: 'Money Trail' },

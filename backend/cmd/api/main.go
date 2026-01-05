@@ -11,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
+	"gorm.io/gorm"
 
 	"github.com/drewjst/deltagov/internal/api"
 	"github.com/drewjst/deltagov/internal/congress"
@@ -27,11 +28,28 @@ func main() {
 		port = "8080"
 	}
 
-	// Initialize database connection (optional for API, required for full functionality)
+	// Initialize Congress client
+	congressAPIKey := os.Getenv("CONGRESS_API_KEY")
+	var congressClient *congress.Client
+	if congressAPIKey != "" {
+		var err error
+		congressClient, err = congress.NewClient(congress.WithAPIKey(congressAPIKey))
+		if err != nil {
+			log.Printf("Warning: Failed to create Congress client: %v", err)
+		} else {
+			log.Println("Congress API client initialized")
+		}
+	} else {
+		log.Println("Warning: CONGRESS_API_KEY not set")
+	}
+
+	// Initialize database connection
+	var db *gorm.DB
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL != "" {
 		dbConfig := database.DefaultConfig(databaseURL)
-		db, err := database.Connect(dbConfig)
+		var err error
+		db, err = database.Connect(dbConfig)
 		if err != nil {
 			log.Printf("Warning: Failed to connect to database: %v", err)
 		} else {
@@ -44,9 +62,6 @@ func main() {
 			} else {
 				log.Println("Database migrations complete")
 			}
-
-			// TODO: Inject db into route handlers for real data
-			_ = db
 		}
 	} else {
 		log.Println("Warning: DATABASE_URL not set, running with mock data only")
@@ -73,22 +88,29 @@ func main() {
 
 	humaAPI := humafiber.New(app, humaConfig)
 
-	// Register API routes
-	api.RegisterRoutes(humaAPI)
+	// Register API routes based on available dependencies
+	if db != nil && congressClient != nil {
+		// Full functionality with database and Congress API
+		billService := api.NewBillService(db, congressClient)
+		handler := api.NewRouteHandler(billService)
+		api.RegisterRoutesWithService(humaAPI, handler)
+		log.Println("API routes registered with full database support")
 
-	// Initialize Congress client for diagnostic endpoints
-	congressAPIKey := os.Getenv("CONGRESS_API_KEY")
-	if congressAPIKey != "" {
-		congressClient, err := congress.NewClient(congress.WithAPIKey(congressAPIKey))
-		if err != nil {
-			log.Printf("Warning: Failed to create Congress client: %v", err)
-		} else {
+		// Also register diagnostic routes
+		diagnosticSvc := api.NewDiagnosticService(congressClient)
+		api.RegisterDiagnosticRoutes(humaAPI, diagnosticSvc)
+		log.Println("Diagnostic routes registered")
+	} else {
+		// Fallback to mock data
+		api.RegisterRoutes(humaAPI)
+		log.Println("API routes registered with mock data (database not available)")
+
+		// Register diagnostic routes if Congress client is available
+		if congressClient != nil {
 			diagnosticSvc := api.NewDiagnosticService(congressClient)
 			api.RegisterDiagnosticRoutes(humaAPI, diagnosticSvc)
-			log.Println("Diagnostic routes registered (Congress API client initialized)")
+			log.Println("Diagnostic routes registered")
 		}
-	} else {
-		log.Println("Warning: CONGRESS_API_KEY not set, diagnostic routes disabled")
 	}
 
 	// Serve Scalar API documentation at /docs
