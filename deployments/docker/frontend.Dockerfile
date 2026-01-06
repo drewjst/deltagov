@@ -36,15 +36,26 @@ COPY deployments/docker/nginx.conf /etc/nginx/nginx.conf
 # Copy built Angular app from builder
 COPY --from=builder /build/dist/frontend/browser /usr/share/nginx/html
 
+# Copy entrypoint script for runtime config injection
+COPY frontend/docker-entrypoint.sh /docker-entrypoint.sh
+
 # Create non-root user setup for Cloud Run compatibility
-RUN chown -R nginx:nginx /usr/share/nginx/html && \
+# Note: nginx.conf uses /tmp/nginx.pid for non-root compatibility
+RUN mkdir -p /usr/share/nginx/html/assets && \
+    chmod +x /docker-entrypoint.sh && \
+    chown nginx:nginx /docker-entrypoint.sh && \
+    chown -R nginx:nginx /usr/share/nginx/html && \
     chown -R nginx:nginx /var/cache/nginx && \
     chown -R nginx:nginx /var/log/nginx && \
-    touch /var/run/nginx.pid && \
-    chown -R nginx:nginx /var/run/nginx.pid
+    touch /tmp/nginx.pid && \
+    chown nginx:nginx /tmp/nginx.pid
 
 # Use non-root user
 USER nginx
+
+# Environment variables for runtime configuration
+ENV API_URL=http://localhost:8080/api/v1
+ENV CONGRESS_API_KEY=
 
 # Expose port (Cloud Run uses 8080)
 EXPOSE 8080
@@ -53,4 +64,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
