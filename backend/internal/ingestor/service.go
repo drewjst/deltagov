@@ -10,14 +10,23 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
+	"golang.org/x/sync/errgroup"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
 	"github.com/drewjst/deltagov/internal/congress"
 	"github.com/drewjst/deltagov/internal/models"
+)
+
+const (
+	// DefaultConcurrency is the default number of parallel workers for batch processing
+	DefaultConcurrency = 5
+	// MaxConcurrency prevents overwhelming the Congress.gov API
+	MaxConcurrency = 10
 )
 
 // Service handles bill ingestion from Congress.gov API.
@@ -81,6 +90,142 @@ func (s *Service) IngestRecentBills(ctx context.Context, limit int) (*IngestResu
 	}
 
 	return result, nil
+}
+
+// SearchIngestConfig contains configuration for search-based ingestion.
+type SearchIngestConfig struct {
+	Congress         int    // Congress number to search (e.g., 119)
+	BillType         string // Bill type filter (hr, s, hjres, etc.)
+	IsAppropriations bool   // Only fetch appropriations/spending bills
+	Limit            int    // Maximum bills to fetch
+	Concurrency      int    // Number of parallel workers (default: 5, max: 10)
+}
+
+// IngestFromSearch fetches bills matching search criteria and upserts them in parallel.
+// Uses errgroup for concurrent processing with controlled parallelism.
+func (s *Service) IngestFromSearch(ctx context.Context, config SearchIngestConfig) (*IngestResult, error) {
+	result := &IngestResult{}
+
+	// Set defaults
+	if config.Concurrency <= 0 {
+		config.Concurrency = DefaultConcurrency
+	}
+	if config.Concurrency > MaxConcurrency {
+		config.Concurrency = MaxConcurrency
+	}
+	if config.Limit <= 0 {
+		config.Limit = 250
+	}
+
+	// Build search filters
+	filters := congress.SearchFilters{
+		Congress:         config.Congress,
+		BillType:         config.BillType,
+		IsAppropriations: config.IsAppropriations,
+		Limit:            config.Limit,
+	}
+
+	// Fetch bills matching search criteria
+	searchResult, err := s.congressClient.SearchBills(ctx, filters)
+	if err != nil {
+		return nil, fmt.Errorf("ingestor: failed to search bills: %w", err)
+	}
+
+	result.BillsFetched = len(searchResult.Bills)
+	log.Printf("Found %d bills matching search criteria (congress=%d, type=%s, appropriations=%v)",
+		result.BillsFetched, config.Congress, config.BillType, config.IsAppropriations)
+
+	if len(searchResult.Bills) == 0 {
+		return result, nil
+	}
+
+	// Process bills in parallel using errgroup
+	return s.processBillsBatch(ctx, searchResult.Bills, config.Concurrency)
+}
+
+// IngestAppropriationsBills is a convenience method to ingest spending/appropriations bills.
+func (s *Service) IngestAppropriationsBills(ctx context.Context, congress int, limit int) (*IngestResult, error) {
+	return s.IngestFromSearch(ctx, SearchIngestConfig{
+		Congress:         congress,
+		IsAppropriations: true,
+		Limit:            limit,
+		Concurrency:      DefaultConcurrency,
+	})
+}
+
+// processBillsBatch processes a batch of bills in parallel using errgroup.
+// Provides controlled concurrency and aggregated error handling.
+func (s *Service) processBillsBatch(ctx context.Context, bills []congress.Bill, concurrency int) (*IngestResult, error) {
+	result := &IngestResult{
+		BillsFetched: len(bills),
+	}
+
+	// Use mutex to safely update result counters
+	var mu sync.Mutex
+
+	// Create errgroup with limited concurrency
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(concurrency)
+
+	for _, apiBill := range bills {
+		bill := apiBill // Capture loop variable
+		g.Go(func() error {
+			created, updated, versionCreated, err := s.upsertBill(gctx, &bill)
+
+			mu.Lock()
+			defer mu.Unlock()
+
+			if err != nil {
+				result.Errors = append(result.Errors, fmt.Errorf("bill %s-%d %s: %w",
+					bill.Type, bill.Congress, bill.Number, err))
+				return nil // Don't fail entire batch on single bill error
+			}
+
+			if created {
+				result.BillsCreated++
+			}
+			if updated {
+				result.BillsUpdated++
+			}
+			if versionCreated {
+				result.VersionsCreated++
+			}
+
+			return nil
+		})
+	}
+
+	// Wait for all goroutines to complete
+	if err := g.Wait(); err != nil {
+		return result, fmt.Errorf("ingestor: batch processing failed: %w", err)
+	}
+
+	log.Printf("Batch processing complete: %d created, %d updated, %d versions, %d errors",
+		result.BillsCreated, result.BillsUpdated, result.VersionsCreated, len(result.Errors))
+
+	return result, nil
+}
+
+// IngestRecentBillsParallel is like IngestRecentBills but processes bills in parallel.
+func (s *Service) IngestRecentBillsParallel(ctx context.Context, limit int, concurrency int) (*IngestResult, error) {
+	// Set concurrency defaults
+	if concurrency <= 0 {
+		concurrency = DefaultConcurrency
+	}
+	if concurrency > MaxConcurrency {
+		concurrency = MaxConcurrency
+	}
+
+	// Fetch recent bills from Congress API
+	fetchResult, err := s.congressClient.FetchRecentBills(ctx, limit)
+	if err != nil {
+		return nil, fmt.Errorf("ingestor: failed to fetch recent bills: %w", err)
+	}
+
+	log.Printf("Fetched %d recent bills from Congress.gov", len(fetchResult.Bills))
+
+	// Process in parallel
+	return s.processBillsBatch(ctx, fetchResult.Bills, concurrency)
 }
 
 // upsertBill creates or updates a bill and potentially creates a new version.

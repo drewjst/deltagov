@@ -51,6 +51,23 @@ export interface BillsListResponse {
   total: number;
 }
 
+export interface LexSearchParams {
+  congress?: number;
+  sponsor?: string;
+  query?: string;
+  type?: string;
+  spending?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+export interface LexSearchResponse {
+  bills: Bill[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -107,5 +124,37 @@ export class BillService {
    */
   computeDiff(billId: number, fromVersionId: number, toVersionId: number): Observable<DiffResponse> {
     return this.http.get<DiffResponse>(`${this.apiUrl}/bills/${billId}/diff/${fromVersionId}/${toVersionId}`);
+  }
+
+  /**
+   * Search bills using the /lex endpoint with optional filters
+   */
+  searchBills(params: LexSearchParams = {}): Observable<LexSearchResponse> {
+    // Build query params, only including defined values
+    const queryParams: Record<string, string> = {};
+
+    if (params.congress !== undefined) {
+      queryParams['congress'] = params.congress.toString();
+    }
+    if (params.sponsor) {
+      queryParams['sponsor'] = params.sponsor;
+    }
+    if (params.query) {
+      queryParams['query'] = params.query;
+    }
+    if (params.type) {
+      queryParams['type'] = params.type;
+    }
+    if (params.spending !== undefined) {
+      queryParams['spending'] = params.spending.toString();
+    }
+    if (params.limit !== undefined) {
+      queryParams['limit'] = params.limit.toString();
+    }
+    if (params.offset !== undefined) {
+      queryParams['offset'] = params.offset.toString();
+    }
+
+    return this.http.get<LexSearchResponse>(`${this.apiUrl}/lex`, { params: queryParams });
   }
 }

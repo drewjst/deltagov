@@ -20,6 +20,15 @@ func main() {
 	// Parse command-line flags
 	singleRun := flag.Bool("single-run", false, "Run ingestion once and exit (for Cloud Run Jobs)")
 	billLimit := flag.Int("limit", 50, "Maximum number of bills to fetch per run")
+
+	// Search-based ingestion flags
+	searchMode := flag.Bool("search", false, "Use search-based ingestion instead of recent bills")
+	congressNum := flag.Int("congress", 119, "Congress number to search (e.g., 118, 119)")
+	billType := flag.String("type", "", "Bill type filter (hr, s, hjres, sjres, hconres, sconres, hres, sres)")
+	appropriationsOnly := flag.Bool("appropriations", false, "Only fetch appropriations/spending bills")
+	concurrency := flag.Int("concurrency", 5, "Number of parallel workers for batch processing (max: 10)")
+	parallel := flag.Bool("parallel", false, "Use parallel processing for recent bills mode")
+
 	flag.Parse()
 
 	// Load .env file if present
@@ -83,10 +92,21 @@ func main() {
 		cancel()
 	}()
 
+	// Build ingestion config
+	ingestionCfg := ingestionConfig{
+		searchMode:         *searchMode,
+		congressNum:        *congressNum,
+		billType:           *billType,
+		appropriationsOnly: *appropriationsOnly,
+		limit:              *billLimit,
+		concurrency:        *concurrency,
+		parallel:           *parallel,
+	}
+
 	// Single-run mode for Cloud Run Jobs
 	if *singleRun {
 		log.Println("DeltaGov Ingestor running in single-run mode...")
-		if err := runIngestion(ctx, ingestorSvc, *billLimit); err != nil {
+		if err := runIngestion(ctx, ingestorSvc, ingestionCfg); err != nil {
 			log.Fatalf("Ingestion failed: %v", err)
 		}
 		log.Println("Single-run ingestion complete, exiting")
@@ -98,7 +118,7 @@ func main() {
 	log.Printf("Polling Congress.gov API every %v", pollInterval)
 
 	// Run initial poll
-	if err := runIngestion(ctx, ingestorSvc, *billLimit); err != nil {
+	if err := runIngestion(ctx, ingestorSvc, ingestionCfg); err != nil {
 		log.Printf("Initial ingestion failed: %v", err)
 	}
 
@@ -112,18 +132,51 @@ func main() {
 			log.Println("Ingestor stopped")
 			return
 		case <-ticker.C:
-			if err := runIngestion(ctx, ingestorSvc, *billLimit); err != nil {
+			if err := runIngestion(ctx, ingestorSvc, ingestionCfg); err != nil {
 				log.Printf("Ingestion failed: %v", err)
 			}
 		}
 	}
 }
 
-// runIngestion performs a single ingestion run.
-func runIngestion(ctx context.Context, svc *ingestor.Service, limit int) error {
-	log.Printf("Starting ingestion run (limit=%d)...", limit)
+// ingestionConfig holds the configuration for an ingestion run.
+type ingestionConfig struct {
+	searchMode         bool
+	congressNum        int
+	billType           string
+	appropriationsOnly bool
+	limit              int
+	concurrency        int
+	parallel           bool
+}
 
-	result, err := svc.IngestRecentBills(ctx, limit)
+// runIngestion performs a single ingestion run.
+func runIngestion(ctx context.Context, svc *ingestor.Service, cfg ingestionConfig) error {
+	var result *ingestor.IngestResult
+	var err error
+
+	if cfg.searchMode {
+		// Search-based ingestion
+		log.Printf("Starting search-based ingestion (congress=%d, type=%s, appropriations=%v, limit=%d, concurrency=%d)...",
+			cfg.congressNum, cfg.billType, cfg.appropriationsOnly, cfg.limit, cfg.concurrency)
+
+		result, err = svc.IngestFromSearch(ctx, ingestor.SearchIngestConfig{
+			Congress:         cfg.congressNum,
+			BillType:         cfg.billType,
+			IsAppropriations: cfg.appropriationsOnly,
+			Limit:            cfg.limit,
+			Concurrency:      cfg.concurrency,
+		})
+	} else if cfg.parallel {
+		// Recent bills with parallel processing
+		log.Printf("Starting parallel ingestion (limit=%d, concurrency=%d)...", cfg.limit, cfg.concurrency)
+		result, err = svc.IngestRecentBillsParallel(ctx, cfg.limit, cfg.concurrency)
+	} else {
+		// Original sequential recent bills mode
+		log.Printf("Starting ingestion run (limit=%d)...", cfg.limit)
+		result, err = svc.IngestRecentBills(ctx, cfg.limit)
+	}
+
 	if err != nil {
 		return err
 	}

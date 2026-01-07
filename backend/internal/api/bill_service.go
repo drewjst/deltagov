@@ -91,6 +91,11 @@ var versionCodeLabels = map[string]string{
 // FetchAndStoreHR1 fetches H.R. 1 (119th Congress) and stores it in the database.
 // This is the "One Big Beautiful Bill".
 func (s *BillService) FetchAndStoreHR1(ctx context.Context) (*BillResponse, error) {
+	// Check if Congress client is available
+	if s.congressClient == nil {
+		return nil, fmt.Errorf("Congress API client not configured - set CONGRESS_API_KEY environment variable")
+	}
+
 	const (
 		congressNum = 119
 		billType    = "hr"
@@ -421,4 +426,104 @@ func (s *BillService) GetAllBills(ctx context.Context) ([]BillResponse, error) {
 // GetBillByID retrieves a single bill by its database ID.
 func (s *BillService) GetBillByID(ctx context.Context, id uint) (*BillResponse, error) {
 	return s.GetBillWithVersions(ctx, id)
+}
+
+// LexSearchParams contains the search parameters for the lex endpoint.
+// Zero values are treated as "no filter" for optional fields.
+type LexSearchParams struct {
+	Congress       int    // Filter by congress number (0 = no filter)
+	Sponsor        string // Filter by sponsor name (empty = no filter)
+	Query          string // Full-text search in title (empty = no filter)
+	BillType       string // Filter by bill type (empty = no filter)
+	IsSpendingBill bool   // Filter by spending bill flag (only applied if true)
+	Limit          int    // Pagination limit (default: 20, max: 100)
+	Offset         int    // Pagination offset
+}
+
+// LexSearchResult contains the search results with pagination info.
+type LexSearchResult struct {
+	Bills  []BillResponse `json:"bills"`
+	Total  int64          `json:"total"`
+	Limit  int            `json:"limit"`
+	Offset int            `json:"offset"`
+}
+
+// SearchBills performs a dynamic search on bills with optional filters.
+// Uses GORM to build a dynamic query based on provided filters.
+func (s *BillService) SearchBills(ctx context.Context, params LexSearchParams) (*LexSearchResult, error) {
+	// Set pagination defaults
+	if params.Limit <= 0 {
+		params.Limit = 20
+	}
+	if params.Limit > 100 {
+		params.Limit = 100
+	}
+	if params.Offset < 0 {
+		params.Offset = 0
+	}
+
+	// Start building the query
+	query := s.db.WithContext(ctx).Model(&models.Bill{})
+
+	// Apply filters dynamically (zero values = no filter)
+	if params.Congress > 0 {
+		query = query.Where("congress = ?", params.Congress)
+	}
+
+	if params.Sponsor != "" {
+		// Use ILIKE for case-insensitive partial match
+		query = query.Where("sponsor ILIKE ?", "%"+params.Sponsor+"%")
+	}
+
+	if params.Query != "" {
+		// Search in title using ILIKE
+		query = query.Where("title ILIKE ?", "%"+params.Query+"%")
+	}
+
+	if params.BillType != "" {
+		query = query.Where("bill_type = ?", params.BillType)
+	}
+
+	if params.IsSpendingBill {
+		query = query.Where("is_spending_bill = ?", true)
+	}
+
+	// Get total count before pagination
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, fmt.Errorf("failed to count bills: %w", err)
+	}
+
+	// Apply pagination and ordering
+	var bills []models.Bill
+	if err := query.
+		Order("update_date DESC").
+		Limit(params.Limit).
+		Offset(params.Offset).
+		Find(&bills).Error; err != nil {
+		return nil, fmt.Errorf("failed to search bills: %w", err)
+	}
+
+	// Convert to response format
+	responses := make([]BillResponse, len(bills))
+	for i, b := range bills {
+		responses[i] = BillResponse{
+			ID:            b.ID,
+			Congress:      b.Congress,
+			BillNumber:    b.BillNumber,
+			BillType:      b.BillType,
+			Title:         b.Title,
+			Sponsor:       b.Sponsor,
+			OriginChamber: b.OriginChamber,
+			CurrentStatus: b.CurrentStatus,
+			UpdateDate:    b.UpdateDate,
+		}
+	}
+
+	return &LexSearchResult{
+		Bills:  responses,
+		Total:  total,
+		Limit:  params.Limit,
+		Offset: params.Offset,
+	}, nil
 }

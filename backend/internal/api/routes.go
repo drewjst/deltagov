@@ -66,6 +66,24 @@ type FetchHR1Output struct {
 	Body BillResponse
 }
 
+// LexSearchInput is the request for searching bills via /api/v1/lex
+// Note: Using non-pointer types as Huma doesn't support pointers for query params.
+// Zero values (0, "", false) are treated as "not provided" in the handler.
+type LexSearchInput struct {
+	Congress       int    `query:"congress" doc:"Filter by congress number (e.g., 118, 119). 0 = no filter" example:"119"`
+	Sponsor        string `query:"sponsor" doc:"Filter by sponsor name (case-insensitive partial match)" example:"Johnson"`
+	Query          string `query:"query" doc:"Search in bill title (case-insensitive partial match)" example:"appropriation"`
+	BillType       string `query:"type" doc:"Filter by bill type (hr, s, hjres, sjres, hconres, sconres, hres, sres)" example:"hr"`
+	IsSpendingBill bool   `query:"spending" doc:"Filter to only spending/appropriations bills"`
+	Limit          int    `query:"limit" default:"20" minimum:"1" maximum:"100" doc:"Number of results per page (max 100)"`
+	Offset         int    `query:"offset" default:"0" minimum:"0" doc:"Pagination offset"`
+}
+
+// LexSearchOutput is the response for searching bills
+type LexSearchOutput struct {
+	Body LexSearchResult
+}
+
 // RouteHandler holds dependencies for route handlers
 type RouteHandler struct {
 	billService *BillService
@@ -232,6 +250,41 @@ func RegisterRoutesWithService(api huma.API, handler *RouteHandler) {
 			return nil, huma.Error500InternalServerError("failed to compute diff: " + err.Error())
 		}
 		return &ComputeDiffOutput{Body: *diff}, nil
+	})
+
+	// Search bills - /api/v1/lex
+	huma.Register(api, huma.Operation{
+		OperationID: "search-bills",
+		Method:      http.MethodGet,
+		Path:        "/api/v1/lex",
+		Summary:     "Search legislative bills",
+		Description: "Search and filter bills by congress, sponsor, title query, bill type, and spending classification. Supports pagination via limit/offset.",
+		Tags:        []string{"Search"},
+	}, func(ctx context.Context, input *LexSearchInput) (*LexSearchOutput, error) {
+		// Convert Huma input to service params
+		params := LexSearchParams{
+			Congress:       input.Congress,
+			Sponsor:        input.Sponsor,
+			Query:          input.Query,
+			BillType:       input.BillType,
+			IsSpendingBill: input.IsSpendingBill,
+			Limit:          input.Limit,
+			Offset:         input.Offset,
+		}
+
+		result, err := handler.billService.SearchBills(ctx, params)
+		if err != nil {
+			return nil, huma.Error500InternalServerError("search failed: " + err.Error())
+		}
+
+		return &LexSearchOutput{
+			Body: LexSearchResult{
+				Bills:  result.Bills,
+				Total:  result.Total,
+				Limit:  result.Limit,
+				Offset: result.Offset,
+			},
+		}, nil
 	})
 }
 

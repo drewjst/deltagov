@@ -7,6 +7,16 @@ export const routes: Routes = [
       import('./pages/landing/landing').then((m) => m.LandingPage),
   },
   {
+    path: 'lex',
+    loadComponent: () =>
+      import('./pages/lex/lex.page').then((m) => m.LexPage),
+  },
+  {
+    path: 'lex/:id',
+    loadComponent: () =>
+      import('./pages/bills/bills').then((m) => m.BillsPage),
+  },
+  {
     path: 'diffs',
     loadComponent: () =>
       import('./pages/bills/bills').then((m) => m.BillsPage),

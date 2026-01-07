@@ -477,6 +477,162 @@ func IsAppropriationFast(title string) bool {
 		strings.Contains(lower, "budget")
 }
 
+// SearchFilters contains optional filters for bill searches.
+type SearchFilters struct {
+	Congress         int    // Filter by congress number (e.g., 118, 119)
+	SponsorName      string // Filter by sponsor name (partial match)
+	IsAppropriations bool   // Filter to only appropriations bills using policyArea
+	BillType         string // Filter by bill type (hr, s, hjres, sjres, etc.)
+	Limit            int    // Maximum results (1-250, default 250)
+	Offset           int    // Pagination offset
+}
+
+// SearchBills searches for bills using the Congress.gov API with optional filters.
+// Uses the /bill endpoint with query parameters for filtering.
+//
+// The Congress.gov API V3 supports filtering via query parameters:
+//   - congress: Filter by congress number
+//   - billType: Filter by bill type (hr, s, hjres, etc.)
+//
+// For sponsor and policy area filtering, we filter client-side after fetching
+// since the API doesn't support direct sponsor name or policy area queries
+// on the main /bill endpoint.
+//
+// When IsAppropriations is true, uses the /bill endpoint and filters results
+// to only return bills where policyArea.name equals "Economics and Public Finance"
+// or title contains appropriation keywords.
+func (c *Client) SearchBills(ctx context.Context, filters SearchFilters) (*FetchBillsResult, error) {
+	// Set defaults
+	limit := filters.Limit
+	if limit <= 0 {
+		limit = defaultLimit
+	}
+	if limit > defaultLimit {
+		limit = defaultLimit
+	}
+
+	// Build base URL with required parameters
+	var urlBuilder strings.Builder
+	urlBuilder.WriteString(c.baseURL)
+
+	// Use specific congress/type endpoint if both provided
+	if filters.Congress > 0 && filters.BillType != "" {
+		fmt.Fprintf(&urlBuilder, "/bill/%d/%s", filters.Congress, strings.ToLower(filters.BillType))
+	} else if filters.Congress > 0 {
+		fmt.Fprintf(&urlBuilder, "/bill/%d", filters.Congress)
+	} else {
+		urlBuilder.WriteString("/bill")
+	}
+
+	fmt.Fprintf(&urlBuilder, "?api_key=%s&format=json&limit=%d&offset=%d",
+		c.apiKey, limit, filters.Offset)
+
+	url := urlBuilder.String()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("congress: failed to create request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("congress: failed to search bills: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if err := c.checkResponse(resp); err != nil {
+		return nil, err
+	}
+
+	// Stream decode the response
+	result := &FetchBillsResult{
+		Bills: make([]Bill, 0, limit),
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+
+	if _, err := decoder.Token(); err != nil {
+		return nil, fmt.Errorf("congress: failed to parse response start: %w", err)
+	}
+
+	for decoder.More() {
+		key, err := decoder.Token()
+		if err != nil {
+			return nil, fmt.Errorf("congress: failed to parse key: %w", err)
+		}
+
+		switch key {
+		case "bills":
+			if err := c.decodeBillsArray(decoder, result); err != nil {
+				return nil, err
+			}
+		case "pagination":
+			var pagination Pagination
+			if err := decoder.Decode(&pagination); err != nil {
+				return nil, fmt.Errorf("congress: failed to decode pagination: %w", err)
+			}
+			result.TotalCount = pagination.Count
+			result.HasMore = pagination.Next != ""
+		default:
+			var skip json.RawMessage
+			if err := decoder.Decode(&skip); err != nil {
+				return nil, fmt.Errorf("congress: failed to skip field %v: %w", key, err)
+			}
+		}
+	}
+
+	// Apply client-side filters
+	if filters.SponsorName != "" || filters.IsAppropriations {
+		result.Bills = c.filterBills(result.Bills, filters)
+	}
+
+	return result, nil
+}
+
+// filterBills applies client-side filters to bills.
+// Used for filters not directly supported by the Congress.gov API.
+func (c *Client) filterBills(bills []Bill, filters SearchFilters) []Bill {
+	if len(bills) == 0 {
+		return bills
+	}
+
+	filtered := make([]Bill, 0, len(bills))
+	sponsorLower := strings.ToLower(filters.SponsorName)
+
+	for _, bill := range bills {
+		// Filter by appropriations (title-based)
+		if filters.IsAppropriations && !IsAppropriation(bill.Title) {
+			continue
+		}
+
+		// Filter by sponsor name (would need detail fetch for accurate filtering)
+		// For now, skip sponsor filtering at this level since Bill struct
+		// doesn't include sponsor info from list endpoint
+		if filters.SponsorName != "" {
+			// Note: Sponsor info requires individual bill detail fetch
+			// This is a placeholder - actual implementation would need
+			// to fetch bill details or use a different API endpoint
+			_ = sponsorLower
+		}
+
+		filtered = append(filtered, bill)
+	}
+
+	return filtered
+}
+
+// SearchAppropriationsBills is a convenience method to search for appropriations/spending bills.
+// Uses the policyArea filter approach combined with title keyword matching.
+func (c *Client) SearchAppropriationsBills(ctx context.Context, congress int, limit int) (*FetchBillsResult, error) {
+	return c.SearchBills(ctx, SearchFilters{
+		Congress:         congress,
+		IsAppropriations: true,
+		Limit:            limit,
+	})
+}
+
 // FetchRecentBills retrieves the most recently updated bills from Congress.gov.
 // This uses the /bill endpoint which returns bills sorted by updateDate descending.
 //

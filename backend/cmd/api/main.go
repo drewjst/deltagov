@@ -91,19 +91,21 @@ func main() {
 	humaAPI := humafiber.New(app, humaConfig)
 
 	// Register API routes based on available dependencies
-	if db != nil && congressClient != nil {
-		// Full functionality with database and Congress API
+	if db != nil {
+		// Database available - register full routes (Congress client optional)
 		billService := api.NewBillService(db, congressClient)
 		handler := api.NewRouteHandler(billService)
 		api.RegisterRoutesWithService(humaAPI, handler)
-		log.Println("API routes registered with full database support")
+		log.Println("API routes registered with database support")
 
-		// Also register diagnostic routes
-		diagnosticSvc := api.NewDiagnosticService(congressClient)
-		api.RegisterDiagnosticRoutes(humaAPI, diagnosticSvc)
-		log.Println("Diagnostic routes registered")
+		// Register diagnostic routes if Congress client is available
+		if congressClient != nil {
+			diagnosticSvc := api.NewDiagnosticService(congressClient)
+			api.RegisterDiagnosticRoutes(humaAPI, diagnosticSvc)
+			log.Println("Diagnostic routes registered")
+		}
 	} else {
-		// Fallback to mock data
+		// Fallback to mock data when no database
 		api.RegisterRoutes(humaAPI)
 		log.Println("API routes registered with mock data (database not available)")
 
