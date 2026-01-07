@@ -47,7 +47,6 @@ RUN mkdir -p /usr/share/nginx/html/assets && \
     chown -R nginx:nginx /usr/share/nginx/html && \
     chown -R nginx:nginx /var/cache/nginx && \
     chown -R nginx:nginx /var/log/nginx && \
-    chown nginx:nginx /etc/nginx/nginx.conf && \
     touch /tmp/nginx.pid && \
     chown nginx:nginx /tmp/nginx.pid
 
