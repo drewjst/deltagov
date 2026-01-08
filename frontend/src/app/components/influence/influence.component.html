@@ -1,0 +1,128 @@
+<div class="flex flex-col gap-8 p-6 max-w-7xl mx-auto">
+  <!-- Header -->
+  <div class="flex flex-col gap-2">
+    <h2 class="text-2xl font-semibold tracking-tight">Influence & Lobbying</h2>
+    <p class="text-muted-foreground">Analyze the financial and organizational forces shaping this legislation.</p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Left Column: Sponsor Spotlight -->
+    <div class="lg:col-span-1">
+      @if (data(); as info) {
+        <section hlmCard class="backdrop-blur-sm bg-card/50 sticky top-4">
+          <div hlmCardHeader>
+            <div class="flex items-center gap-4">
+              <hlm-avatar variant="large">
+                <img [src]="info.sponsor.imageUrl" [alt]="info.sponsor.name" hlmAvatarImage>
+                <span class="bg-primary text-primary-foreground" hlmAvatarFallback>{{ info.sponsor.name.charAt(0) }}</span>
+              </hlm-avatar>
+              <div>
+                <h3 hlmCardTitle class="text-lg">{{ info.sponsor.name }}</h3>
+                <p hlmCardDescription class="text-sm">{{ info.sponsor.role }}</p>
+              </div>
+            </div>
+          </div>
+          <div hlmCardContent class="mt-4">
+            <h4 class="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Contribution Summary</h4>
+            <div class="space-y-3">
+              @for (contrib of info.sponsor.contributions; track contrib.industry) {
+                <div class="flex justify-between items-center text-sm">
+                  <span class="text-foreground font-medium">{{ contrib.industry }}</span>
+                  <span class="font-mono text-muted-foreground">{{ contrib.amount }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </section>
+      } @else {
+        <div class="h-64 rounded-xl border border-border bg-muted/20 animate-pulse"></div>
+      }
+    </div>
+
+    <!-- Right Column: Stakeholder Table -->
+    <div class="lg:col-span-2 flex flex-col gap-4">
+      <!-- Search & Controls -->
+      <div class="flex items-center justify-between gap-4 bg-card/30 p-4 rounded-lg border border-border">
+        <div class="relative flex-1 max-w-sm">
+          <ng-icon name="lucideSearch" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size="16"></ng-icon>
+          <input
+            type="text"
+            [ngModel]="searchTerm()"
+            (ngModelChange)="searchTerm.set($event)"
+            placeholder="Search stakeholders..."
+            class="w-full h-9 pl-9 pr-3 rounded-md border border-input bg-background/50 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+          >
+        </div>
+        <div class="flex items-center gap-2">
+           <button hlmBtn variant="ghost" size="sm" class="text-muted-foreground hover:text-foreground">
+             <ng-icon name="lucideFilter" size="16" class="mr-2"></ng-icon>
+             Filter
+           </button>
+        </div>
+      </div>
+
+      <!-- Table Card -->
+      <div class="rounded-md border border-border overflow-hidden bg-card/50 backdrop-blur-sm">
+        <table class="w-full text-sm text-left">
+          <thead class="bg-muted/50 border-b border-border text-muted-foreground font-medium">
+            <tr>
+              <th class="px-4 py-3 font-medium">Organization</th>
+              <th class="px-4 py-3 font-medium">Position</th>
+              <th class="px-4 py-3 font-medium flex items-center gap-1 cursor-help group">
+                Reported Spend
+                <!-- Tooltips are complicated in this setup, simplifying for now to just show the icon -->
+                <ng-icon name="lucideInfo" size="14" class="text-muted-foreground" />
+              </th>
+              <th class="px-4 py-3 font-medium">Text Connection</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            @if (data()) {
+              @for (stakeholder of filteredStakeholders(); track stakeholder.organization) {
+                <tr class="hover:bg-muted/30 transition-colors">
+                  <td class="px-4 py-3 font-medium text-foreground">{{ stakeholder.organization }}</td>
+                  <td class="px-4 py-3">
+                    <span
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border"
+                      [ngClass]="{
+                        'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800': stakeholder.position === 'Support',
+                        'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800': stakeholder.position === 'Oppose',
+                        'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800': stakeholder.position === 'Amend'
+                      }"
+                    >
+                      {{ stakeholder.position }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 font-mono text-muted-foreground">{{ stakeholder.reportedSpend }}</td>
+                  <td class="px-4 py-3">
+                    <a href="#" class="inline-flex items-center gap-1.5 text-primary hover:underline hover:text-primary/80 transition-colors group">
+                      <ng-icon name="lucideFileText" size="14" class="text-muted-foreground group-hover:text-primary"></ng-icon>
+                      <span class="font-medium">{{ stakeholder.textConnection.section }}</span>
+                      <span class="text-muted-foreground text-xs hidden sm:inline-block">- {{ stakeholder.textConnection.description }}</span>
+                    </a>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="px-4 py-8 text-center text-muted-foreground">
+                    No stakeholders found matching "{{ searchTerm() }}".
+                  </td>
+                </tr>
+              }
+            } @else {
+              <!-- Loading Skeleton -->
+              @for (i of [1,2,3,4,5]; track i) {
+                <tr>
+                  <td class="px-4 py-4"><div class="h-4 w-32 bg-muted/20 rounded animate-pulse"></div></td>
+                  <td class="px-4 py-4"><div class="h-5 w-16 bg-muted/20 rounded-full animate-pulse"></div></td>
+                  <td class="px-4 py-4"><div class="h-4 w-20 bg-muted/20 rounded animate-pulse"></div></td>
+                  <td class="px-4 py-4"><div class="h-4 w-48 bg-muted/20 rounded animate-pulse"></div></td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
